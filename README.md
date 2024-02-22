@@ -21,7 +21,7 @@
 
 **[在线预览 &rarr;](https://eleazeno.github.io/)**
 
-![screenshot home](https://mazhuang.org/assets/images/screenshots/home.png)
+![screenshot home](https://raw.githubusercontent.com/EleaZeno/actions/main/snapshot/)
 
 ## Fork 指南
 
