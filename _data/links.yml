@@ -6,10 +6,14 @@
   url: https://supermemo.guru/wiki/SuperMemo_Guru
   src: life
 
-  name: stackoverflow
+- name: stackoverflow
   url: https://stackoverflow.com/
   src: life
 
+- name: AlpacaEval Leaderboard
+  url: https://tatsu-lab.github.io/alpaca_eval/
+  src: life
+  
 - name: 码志
   url: http://mazhuang.org
   src: life
