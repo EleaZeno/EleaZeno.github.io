@@ -3,7 +3,7 @@ name: Update Screenshot
 on:
   push:
     branches:
-      - master  # README 所属仓库的主分支，根据你的实际情况修改
+      - main  # README 所属仓库的主分支，根据你的实际情况修改
 
 jobs:
   update_screenshot:
@@ -12,8 +12,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          repository: EleaZeno/EleaZeno.github.io
-          path: EleaZeno.github.io
+          repository: EleaZeno/README所属仓库的信息
+          path: README所在的路径
 
       - name: Find latest screenshot
         id: find_screenshot
@@ -23,21 +23,12 @@ jobs:
 
       - name: Update README
         run: |
-          sed -i "s|!\[screenshot home\](.*)|![screenshot home](https://raw.githubusercontent.com/EleaZeno/actions/main/snapshot/$(basename ${{ steps.find_screenshot.outputs.latest_screenshot }}))|g" EleaZeno.github.io/README.md
-          cat EleaZeno.github.io/README.md  # 添加此行以输出修改后的 README.md 文件内容
+          sed -i "s|!\[screenshot home\](.*)|![screenshot home](https://raw.githubusercontent.com/EleaZeno/actions/main/snapshot/$(basename ${{ steps.find_screenshot.outputs.latest_screenshot }}))|g" README.md
 
-      - name: Git status
+      - name: Commit and push changes
         run: |
-          cd EleaZeno.github.io/
-          git status
-
-      - name: Git config
-        run: |
-          cd EleaZeno.github.io/
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
-      - name: Git add
-        run: |
-          cd EleaZeno.github.io/
           git add README.md
+          git commit -m "Update screenshot"
+          git push
