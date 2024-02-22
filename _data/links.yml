@@ -1,0 +1,59 @@
+- name: 格雷厄姆
+  url: https://paulgraham.com/
+  src: life
+
+- name: supermemo
+  url: https://supermemo.guru/wiki/SuperMemo_Guru
+  src: life
+
+- name: 码志
+  url: http://mazhuang.org
+  src: life
+
+- name: 只宁静不致远
+  url: http://zxning.github.io
+  src: life
+
+- name: Blog Something
+  url: http://chenxiaoyoyo.github.io
+  src: life
+
+- name: 日新亭
+  url: http://www.fengerzh.com/
+  src: life
+
+- name: wanandroid
+  url: http://www.wanandroid.com/
+  src: life
+
+- name: 董小姐的草原
+  url: https://candy961.github.io/
+  src: life
+
+- name: 王玉超
+  url: https://yuchao.wang/
+  src: www
+
+- name: 孙不服的博客
+  url: https://sunbufu.github.io/
+  src: www
+
+- name: HwiLu's 博客
+  url: https://hwilu.github.io/
+  src: www
+
+- name: 秦大圣的博客
+  url: https://qinjisheng.top/
+  src: www
+
+- name: 极客玩家大白
+  url: https://geekplayers.com/
+  src: www
+
+- name: 见字如面
+  url: https://hiwannz.com
+  src: www
+
+- name: river's blog
+  url: https://www.river106.cn
+  src: www

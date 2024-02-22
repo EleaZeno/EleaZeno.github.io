@@ -1,0 +1,84 @@
+# This is a basic workflow to help you get started with Actions
+# 工作流名称
+name: CI
+​
+# Controls when the workflow will run
+# on 表示在什么时候触发工作流去执行
+on:
+  # 在push代码到仓库时执行
+  push:
+  # 定时执行，这里 - cron 配置的就是一个定期执行的表达式
+  # 0 0,6,12,18 * * * 表示的在0，6，12，18点整点执行，这里是ISO时间，和国内差8小时
+  schedule:
+    - cron: '0 0,6,12,18 * * *'
+​
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# 工作流内容
+jobs:
+  # This workflow contains a single job called "build"
+  # 将工作命名为 build
+  build:
+    # The type of runner that the job will run on
+    # 配置运行工作的系统环境，这里是用最新版本的ubuntu来执行
+    runs-on: ubuntu-latest
+​
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    # 具体执行d的步骤
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # 使用checkout@v2 action，也就是检出代码
+      - uses: actions/checkout@v2
+​
+      # 因为执行的环境没有中文字体，抓中文网站会乱码，所以需要添加中文字体
+      - name: add chinese fonts
+        # run是具体执行的内容，多行的话，需要有这么一个 '|'
+        run: |
+          # 安装字体的环境
+          sudo apt-get install ttf-mscorefonts-installer
+          sudo apt-get install fontconfig
+          fc-list :lang=zh
+          ls -lh /usr/share/fonts/
+          # 拷贝仓库里fonts路径下的所有字体文件到系统字体目录下
+          # 我在仓库d的fonts目录下放了微软雅黑字体
+          cp -rf ./fonts/* /usr/share/fonts/
+          mkfontscale
+          mkfontdir
+          fc-cache
+          fc-list :lang=zh
+          
+      # 缓存安装的node modules 这里使用的是github action中关于node modules方式
+      # 官方文档拷贝直接使用的
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      
+      # 安装node依赖
+      - name: Install Dependencies
+        run: npm install
+​
+      # Runs a single command using the runners shell
+      # 来时执行具体脚本
+      - name: Run script
+        run: node index.js
+        
+      # 打印截图文件夹内容，包含了新的截图
+      - name: Print result
+        run: ls -lh ./snapshot
+​
+      # 将新的截图用git提交到仓库中
+      - name: Push snapshot
+        run: |
+          git config --global user.name 'Jarod2011'
+          git config --global user.email 'jarod2011@users.noreply.github.com'
+          git add snapshot/
+          git commit -am "push new snapshot"
+          git push
