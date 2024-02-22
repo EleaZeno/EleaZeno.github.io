@@ -6,6 +6,10 @@
   url: https://supermemo.guru/wiki/SuperMemo_Guru
   src: life
 
+  name: stackoverflow
+  url: https://stackoverflow.com/
+  src: life
+
 - name: 码志
   url: http://mazhuang.org
   src: life
