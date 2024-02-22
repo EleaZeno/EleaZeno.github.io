@@ -14,7 +14,7 @@ permalink: /donate/
 
 ## Paypal
 
-[Donate via Paypal](https://www.paypal.com/paypalme/eleazeno))
+([Donate via Paypal](https://www.paypal.com/paypalme/eleazeno))
 
 ## 微信 / Wechat
 
