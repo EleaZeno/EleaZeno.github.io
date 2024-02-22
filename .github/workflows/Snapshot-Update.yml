@@ -1,0 +1,35 @@
+name: Update Screenshot
+
+on:
+  push:
+    branches:
+      - master  # README 所属仓库的主分支，根据你的实际情况修改
+
+jobs:
+  update_screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          repository: EleaZeno/EleaZeno.github.io
+          path: EleaZeno.github.io
+
+      - name: Find latest screenshot
+        id: find_screenshot
+        run: |
+          latest_file=$(ls -t ../actions/snapshot/*.png | head -n1)
+          echo "::set-output name=latest_screenshot::$latest_file"
+
+      - name: Update README
+        run: |
+          sed -i "s|!\[screenshot home\](.*)|![screenshot home](https://raw.githubusercontent.com/EleaZeno/actions/main/snapshot/$(basename ${{ steps.find_screenshot.outputs.latest_screenshot }}))|g" EleaZeno.github.io/README.md
+
+      - name: Commit and push changes
+        run: |
+          cd EleaZeno.github.io/
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git commit -m "Update screenshot"
+          git push
