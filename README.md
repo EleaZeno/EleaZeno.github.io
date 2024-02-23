@@ -21,7 +21,7 @@
 
 **[在线预览 &rarr;](https://eleazeno.github.io/)**
 
-![screenshot home](https://raw.githubusercontent.com/EleaZeno/actions/main/snapshot/)
+![screenshot home](https://github.com/EleaZeno/actions/blob/main/begin/page.png)
 
 ## Fork 指南
 
