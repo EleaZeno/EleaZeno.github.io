@@ -11,7 +11,7 @@ mathjax: false
 mindmap: false
 mindmap2: false
 ---
-# 关于读书
+# 我的书究竟是不是白读了？
 
 >不要哭，不要笑，不要生气，要理解。——斯宾诺莎
 
