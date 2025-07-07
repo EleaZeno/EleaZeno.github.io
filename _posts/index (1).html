@@ -1,0 +1,483 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绩效计算系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        accent: '#8B5CF6',
+                        neutral: '#1F2937',
+                        "base-100": '#FFFFFF',
+                        info: '#3ABFF8',
+                        success: '#36D399',
+                        warning: '#FBBD23',
+                        error: '#F87272',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            }
+            .gradient-bg {
+                background: linear-gradient(135deg, #165DFF 0%, #8B5CF6 100%);
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary transition duration-200;
+            }
+            .tab-active {
+                @apply border-primary text-primary;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-calculator text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-neutral">绩效计算系统</h1>
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium">首页</a>
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium">报表中心</a>
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium">帮助</a>
+            </nav>
+            <button class="md:hidden text-neutral text-xl" id="menu-toggle">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white shadow-md absolute w-full" id="mobile-menu">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-4">
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium py-2 border-b border-gray-100">首页</a>
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium py-2 border-b border-gray-100">报表中心</a>
+                <a href="#" class="text-neutral hover:text-primary transition-colors duration-200 font-medium py-2">帮助</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 系统介绍卡片 -->
+        <section class="mb-12 text-center max-w-3xl mx-auto">
+            <div class="gradient-bg text-white p-8 rounded-2xl shadow-lg transform hover:scale-[1.01] transition-all duration-300">
+                <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">绩效计算助手</h2>
+                <p class="text-lg opacity-90">一站式绩效计算平台，帮助您快速准确计算各类绩效数据</p>
+            </div>
+        </section>
+
+        <!-- 功能选项卡 -->
+        <section class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8" id="performance-tabs">
+                    <button id="tab-expansion" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200">
+                        <i class="fa fa-line-chart mr-2"></i>扩科绩效
+                    </button>
+                    <button id="tab-completion" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200">
+                        <i class="fa fa-graduation-cap mr-2"></i>完课绩效
+                    </button>
+                    <!-- 这里可以添加更多选项卡 -->
+                </nav>
+            </div>
+        </section>
+
+        <!-- 功能内容区 -->
+        <section id="tab-content" class="mb-16">
+            <!-- 扩科绩效计算器 (现有内容) -->
+            <div id="content-expansion" class="block">
+                <!-- 这里嵌入原有的绩效计算页面内容 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 card-shadow max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold text-neutral mb-6 flex items-center">
+                        <i class="fa fa-calculator text-primary mr-2"></i>
+                        扩科绩效计算器
+                    </h2>
+                    
+                    <form id="performance-form" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="team-size" class="block text-sm font-medium text-gray-700">带班人数</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                        <i class="fa fa-users"></i>
+                                    </span>
+                                    <input type="number" id="team-size" name="team-size" min="1" required="" class="pl-10 w-full rounded-lg border border-gray-300 py-3 px-4 input-focus" placeholder="请输入带班人数">
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label for="subjects-enrolled" class="block text-sm font-medium text-gray-700">报名科目数</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                        <i class="fa fa-book"></i>
+                                    </span>
+                                    <input type="number" id="subjects-enrolled" name="subjects-enrolled" min="0" required="" class="pl-10 w-full rounded-lg border border-gray-300 py-3 px-4 input-focus" placeholder="请输入报名科目数">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl flex items-center justify-center">
+                                <i class="fa fa-calculator mr-2"></i>
+                                计算绩效
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 计算结果 -->
+                    <div id="result-section" class="mt-8 hidden">
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <h3 class="text-xl font-semibold text-neutral mb-4">计算结果</h3>
+                            
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                                    <p class="text-sm text-gray-500">转化率</p>
+                                    <p id="conversion-rate" class="text-2xl font-bold text-primary">-</p>
+                                </div>
+                                
+                                <div class="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                                    <p class="text-sm text-gray-500">绩效系数</p>
+                                    <p id="performance-coefficient" class="text-2xl font-bold text-accent">-</p>
+                                </div>
+                                
+                                <div class="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                                    <p class="text-sm text-gray-500">带班费标准/人</p>
+                                    <p id="leadership-fee" class="text-2xl font-bold text-secondary">-</p>
+                                </div>
+                                
+                                <div class="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                                    <p class="text-sm text-gray-500">绩效金额</p>
+                                    <p id="performance-amount" class="text-2xl font-bold text-success">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 bg-primary/5 rounded-lg p-4 border border-primary/20">
+                                <h4 class="font-medium text-primary flex items-center">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    计算详情
+                                </h4>
+                                <div id="calculation-details" class="mt-2 text-sm text-gray-700">
+                                    <!-- 计算详情将在这里动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 绩效标准表格 -->
+                <section class="mt-16 mb-16">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 card-shadow max-w-6xl mx-auto">
+                        <h2 class="text-2xl font-bold text-neutral mb-6 flex items-center">
+                            <i class="fa fa-table text-primary mr-2"></i>
+                            扩科绩效标准对照表
+                        </h2>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化率范围</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">绩效系数</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">带班费标准/人</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="performance-ranges">
+                                    <!-- JavaScript will populate this table -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- 完课绩效计算器 (初始隐藏) -->
+            <div id="content-completion" class="hidden">
+                <div class="bg-white rounded-2xl shadow-xl p-8 card-shadow max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold text-neutral mb-6 flex items-center">
+                        <i class="fa fa-graduation-cap text-primary mr-2"></i>
+                        完课绩效计算器
+                    </h2>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fa fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    完课绩效计算功能正在开发中，敬请期待！
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-neutral mb-4">完课绩效计算方式</h3>
+                            <ul class="space-y-2 text-gray-700">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-success mt-1 mr-2"></i>
+                                    <span>基于学员实际完成课程数量计算</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-success mt-1 mr-2"></i>
+                                    <span>根据课程难度系数进行加权</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-success mt-1 mr-2"></i>
+                                    <span>包含学员满意度评分因素</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-neutral mb-4">即将支持</h3>
+                            <ul class="space-y-2 text-gray-700">
+                                <li class="flex items-start">
+                                    <i class="fa fa-clock-o text-gray-500 mt-1 mr-2"></i>
+                                    <span>按时间段统计完课率</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-clock-o text-gray-500 mt-1 mr-2"></i>
+                                    <span>不同类型课程的绩效系数配置</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-clock-o text-gray-500 mt-1 mr-2"></i>
+                                    <span>学员成绩与绩效关联计算</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="request-completion-feature" class="bg-primary/10 hover:bg-primary/20 text-primary font-medium py-2 px-4 rounded-lg transition-all duration-200">
+                            <i class="fa fa-bell mr-2"></i>
+                            通知我功能上线
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-neutral text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-calculator text-primary text-xl"></i>
+                        <span class="font-bold text-lg">绩效计算系统</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">© 2025 版权所有</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors duration-200">
+                        <i class="fa fa-question-circle"></i>
+                        <span class="ml-1 hidden md:inline">帮助中心</span>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors duration-200">
+                        <i class="fa fa-envelope"></i>
+                        <span class="ml-1 hidden md:inline">联系我们</span>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors duration-200">
+                        <i class="fa fa-file-text-o"></i>
+                        <span class="ml-1 hidden md:inline">使用条款</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 绩效标准数据
+        const performanceRanges = [
+            { min: 0, max: 5, coefficient: 0.8, leadershipFee: 7 },
+            { min: 5, max: 6, coefficient: 1, leadershipFee: 8 },
+            { min: 6, max: 7, coefficient: 1.1, leadershipFee: 9 },
+            { min: 7, max: 8, coefficient: 1.2, leadershipFee: 10 },
+            { min: 8, max: 9, coefficient: 1.3, leadershipFee: 11 },
+            { min: 9, max: 10, coefficient: 1.4, leadershipFee: 12 },
+            { min: 10, max: 11, coefficient: 1.5, leadershipFee: 13 },
+            { min: 11, max: 12, coefficient: 1.6, leadershipFee: 14 },
+            { min: 12, max: 13, coefficient: 1.7, leadershipFee: 15 },
+            { min: 13, max: 14, coefficient: 1.8, leadershipFee: 16 },
+            { min: 14, max: 15, coefficient: 1.9, leadershipFee: 17 },
+            { min: 15, max: 16, coefficient: 2, leadershipFee: 18 },
+            { min: 16, max: 17, coefficient: 2.1, leadershipFee: 18 },
+            { min: 17, max: 18, coefficient: 2.2, leadershipFee: 18 },
+            { min: 18, max: 19, coefficient: 2.3, leadershipFee: 19 },
+            { min: 19, max: 20, coefficient: 2.4, leadershipFee: 19 },
+            { min: 20, max: 21, coefficient: 2.5, leadershipFee: 19 },
+            { min: 21, max: 22, coefficient: 2.6, leadershipFee: 20 },
+            { min: 22, max: 23, coefficient: 2.7, leadershipFee: 20 },
+            { min: 23, max: 24, coefficient: 2.8, leadershipFee: 20 },
+            { min: 24, max: 25, coefficient: 2.9, leadershipFee: 21 },
+            { min: 25, max: 26, coefficient: 3, leadershipFee: 21 },
+            { min: 26, max: 26.5, coefficient: 3.1, leadershipFee: 22 },
+            { min: 26.5, max: 27, coefficient: 3.2, leadershipFee: 23 },
+            { min: 27, max: 27.5, coefficient: 3.3, leadershipFee: 24 },
+            { min: 27.5, max: 28, coefficient: 3.4, leadershipFee: 25 },
+            { min: 28, max: Infinity, coefficient: 3.5, leadershipFee: 26 }
+        ];
+
+        // 填充绩效标准表格
+        const tableBody = document.getElementById('performance-ranges');
+        performanceRanges.forEach(range => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors duration-150';
+            
+            let rangeText;
+            if (range.max === Infinity) {
+                rangeText = `${range.min}%及以上`;
+            } else if (range.min === 0) {
+                rangeText = `${range.min}%以下`;
+            } else {
+                rangeText = `【${range.min}%-${range.max}%）`;
+            }
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">${rangeText}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${range.coefficient}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${range.leadershipFee}元</div>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+
+        // 表单提交处理
+        document.getElementById('performance-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const teamSize = parseInt(document.getElementById('team-size').value);
+            const subjectsEnrolled = parseInt(document.getElementById('subjects-enrolled').value);
+            
+            if (isNaN(teamSize) || isNaN(subjectsEnrolled) || teamSize <= 0 || subjectsEnrolled < 0) {
+                alert('请输入有效的带班人数和报名科目数！');
+                return;
+            }
+            
+            // 计算转化率 (报名科目数 / 带班人数)
+            const conversionRate = (subjectsEnrolled / teamSize) * 100;
+            
+            // 查找对应的绩效范围
+            const matchedRange = performanceRanges.find(range => {
+                return conversionRate >= range.min && conversionRate < range.max;
+            });
+            
+            // 显示结果
+            document.getElementById('result-section').classList.remove('hidden');
+            
+            // 填充结果数据
+            document.getElementById('conversion-rate').textContent = `${conversionRate.toFixed(2)}%`;
+            document.getElementById('performance-coefficient').textContent = matchedRange.coefficient;
+            document.getElementById('leadership-fee').textContent = `${matchedRange.leadershipFee}元`;
+            
+            // 计算绩效金额 (带班费 × 绩效系数 × 带班人数 × 绩效点)
+            // 假设绩效点为1，用户可以根据实际情况调整
+            const performancePoint = 1; // 可根据实际情况修改
+            const performanceAmount = matchedRange.leadershipFee * matchedRange.coefficient * teamSize * performancePoint;
+            
+            document.getElementById('performance-amount').textContent = `${performanceAmount.toFixed(2)}元`;
+            
+            // 填充计算详情
+            document.getElementById('calculation-details').innerHTML = `
+                <p>转化率 = ${subjectsEnrolled} (报名科目数) ÷ ${teamSize} (带班人数) × 100% = ${conversionRate.toFixed(2)}%</p>
+                <p>绩效系数 = ${matchedRange.coefficient} (对应转化率 ${conversionRate.toFixed(2)}%)</p>
+                <p>带班费标准 = ${matchedRange.leadershipFee}元/人</p>
+                <p>绩效金额 = ${matchedRange.leadershipFee} (带班费) × ${matchedRange.coefficient} (绩效系数) × ${teamSize} (带班人数) × ${performancePoint} (绩效点) = ${performanceAmount.toFixed(2)}元</p>
+            `;
+            
+            // 平滑滚动到结果部分
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 移动端菜单切换
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 20) {
+                navbar.classList.add('py-2', 'shadow');
+                navbar.classList.remove('py-3');
+            } else {
+                navbar.classList.add('py-3');
+                navbar.classList.remove('py-2', 'shadow');
+            }
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    
+                    // 关闭移动菜单
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                }
+            });
+        });
+
+        // 选项卡切换逻辑
+        document.getElementById('tab-expansion').addEventListener('click', function() {
+            // 切换选项卡样式
+            document.getElementById('tab-expansion').classList.add('tab-active');
+            document.getElementById('tab-completion').classList.remove('tab-active');
+            
+            // 显示对应的内容
+            document.getElementById('content-expansion').classList.remove('hidden');
+            document.getElementById('content-completion').classList.add('hidden');
+        });
+        
+        document.getElementById('tab-completion').addEventListener('click', function() {
+            // 切换选项卡样式
+            document.getElementById('tab-expansion').classList.remove('tab-active');
+            document.getElementById('tab-completion').classList.add('tab-active');
+            
+            // 显示对应的内容
+            document.getElementById('content-expansion').classList.add('hidden');
+            document.getElementById('content-completion').classList.remove('hidden');
+        });
+        
+        // 完课绩效通知功能
+        document.getElementById('request-completion-feature').addEventListener('click', function() {
+            alert('感谢您的关注！完课绩效功能上线后将第一时间通知您。');
+        });
+    </script>
+</body>
+</html>    
