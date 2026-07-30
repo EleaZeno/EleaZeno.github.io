@@ -93,17 +93,23 @@ import Prereq from '../../components/Prereq.astro';
 
 > I propose to consider the question, "Can machines think?"
 
+我提议考虑这样一个问题：**"机器能思考吗？"**
+
 然后他立刻拒绝了回答它。因为要回答就得先定义 machine 和 think，而定义会陷入词义之争。他的办法是换一个问题。
 
 原始设定是这样的：
 
 > It is played with three people, a man (A), a woman (B), and an interrogator (C) who may be of either sex.
 
+这个游戏由三个人来玩：一个男人（A）、一个女人（B），以及一位性别不限的审问者（C）。
+
 注意这一步：**最初的游戏里没有机器**。三个人，A 是男人，B 是女人，C 是审问者。C 与 A、B 通过打字交流，任务是判断谁是男谁是女。而 **A 的目标是让 C 判断错误**，B 的目标是帮助 C 判断正确。
 
 机器是在第二步才进场的：
 
 > We now ask the question, "What will happen when a machine takes the part of A in this game?" Will the interrogator decide wrongly as often when the game is played like this as he does when the game is played between a man and a woman?
+
+现在我们问这个问题：**当一台机器来扮演 A 的角色时，会发生什么？**审问者判断错误的频率，会和这个游戏在一男一女之间进行时一样高吗？
 
 <Sidenote kind="caution">
 这里是全篇最常被简化掉的地方。流行版本的"图灵测验"是**机器 vs 人，判断谁是机器**。原文是**机器接替一个正在假装女人的男人**，基准线是"男人假装女人的成功率"。差别不只是形式：原始设定里，成功的标准是相对的（不比人类模仿者差），而不是绝对的（骗过审问者）。
@@ -112,6 +118,8 @@ import Prereq from '../../components/Prereq.astro';
 这个替换带来一个后果，图灵自己点了出来：
 
 > The new problem has the advantage of drawing a fairly sharp line between the physical and the intellectual capacities of a man.
+
+这个新问题的好处在于，它在人的**体能**与**智能**之间划出了一条相当清晰的界线。
 
 打字这个界面把外形、声音、动作全部隔离掉了。机器不需要长得像人，只需要**答得像**。这是一个刻意的窄化。
 
@@ -122,6 +130,8 @@ import Prereq from '../../components/Prereq.astro';
 图灵还回答了"这种问答形式够不够宽"这个疑虑：
 
 > The question and answer method seems to be suitable for introducing almost any one of the fields of human endeavour that we wish to include.
+
+这种一问一答的方式，似乎适合把我们想纳入的**几乎任何一个人类活动领域**都引进来。
 
 <Check q="原始模仿游戏里，审问者要判断的是什么？">
 判断谁是男人、谁是女人——不是判断谁是机器。机器的角色是接替那个"假装女人的男人"（A），衡量标准是它骗过审问者的频率是否不低于人类男性做同一件事的频率。
@@ -135,6 +145,8 @@ import Prereq from '../../components/Prereq.astro';
 
 > This special property of digital computers, that they can mimic any discrete-state machine, is described by saying that they are universal machines.
 
+数字计算机这一特殊性质——**它们能模仿任何离散状态机**——被表述为：它们是通用机器。
+
 这一步把问题从"某台机器能不能思考"收窄成"数字计算机能不能思考"——因为如果任何离散状态机都能被数字计算机模拟，那么讨论其他构造方式就没有额外收益。
 
 <Sidenote kind="why">
@@ -145,11 +157,15 @@ import Prereq from '../../components/Prereq.astro';
 
 > Let us fix our attention on one particular digital computer C. Is it true that by modifying this computer to have an adequate storage, suitably increasing its speed of action, and providing it with an appropriate programme, C can be made to play satisfactorily the part of A in the imitation game, the part of B being taken by a man?
 
+让我们把注意力固定在某一台特定的数字计算机 C 上。是否只要改造它、使其拥有足够的存储、适当提高它的运行速度、并为它提供一个合适的程序，C 就能令人满意地扮演模仿游戏里 A 的角色（而 B 由一个人来扮演）？
+
 ## 6. 那个被反复错引的预测
 
 这是全文被引用最多、也被拆解得最不完整的一段。完整的句子是：
 
 > I believe that in about fifty years' time it will be possible, to programme computers, with a storage capacity of about 10⁹, to make them play the imitation game so well that an average interrogator will not have more than 70 per cent chance of making the right identification after five minutes of questioning.
+
+我相信，大约五十年之后，就有可能为存储容量约 10⁹ 的计算机编写程序，使它们把模仿游戏玩得足够好——**让一个普通水平的审问者在五分钟提问之后，正确识别的概率不超过 70%**。
 
 四个条件是一个整体：**五十年**、**约 10⁹ 存储**、**平均水平的审问者**、**五分钟提问**、正确识别率**不超过 70%**。
 
@@ -160,6 +176,8 @@ import Prereq from '../../components/Prereq.astro';
 紧接着的下一句，才是他对原问题的真正态度：
 
 > The original question, "Can machines think?" I believe to be too meaningless to deserve discussion.
+
+我认为，最初那个问题——"机器能思考吗？"——**太没有意义，不值得讨论**。
 
 <Sidenote kind="caution">
 这句话经常被单独摘出来当作图灵"回避问题"的证据。放回上下文看，它是一个方法论立场：他认为"机器能否思考"是个词义问题，而词义会随使用而变。所以他紧接着预测的是**语言习惯的变化**，不是技术指标——他说到本世纪末，人们将可以谈论机器思考而不被反驳。
@@ -189,6 +207,8 @@ import Prereq from '../../components/Prereq.astro';
 
 > Unfortunately the statistical evidence, at least for telepathy, is overwhelming.
 
+遗憾的是，统计证据——至少就心灵感应而言——是压倒性的。
+
 <Sidenote kind="caution">
 这句话按今天的标准是错的——心灵感应的统计证据后来被证明不成立（主要是实验设计缺陷与发表偏倚）。这一段在多数教材里被静默删除。我们保留它，因为一篇论文里作者判断失误的部分，和判断正确的部分同样是史料。而且这一段暴露了图灵的方法：他连自己不喜欢的反驳也照样处理，甚至为它设计了补救方案（"telepathy-proof room"）。
 </Sidenote>
@@ -197,6 +217,8 @@ import Prereq from '../../components/Prereq.astro';
 
 > The Analytical Engine has no pretensions to originate anything. It can do whatever we know how to order it to perform
 
+分析机不自称能**原创任何东西**。它能做的，是我们知道该如何命令它去做的任何事情。
+
 图灵的回应是把它拆成两个不同的主张：机器不能让我们意外（可以经验检验，且是假的），以及机器不能真正创造（这是关于"创造"这个词该怎么用的问题）。
 
 ## 7. Learning Machines：论文的最后一步，也是最被低估的一步
@@ -204,6 +226,8 @@ import Prereq from '../../components/Prereq.astro';
 最后一节图灵问：怎么才能造出这样的机器？他的答案不是"写一个足够聪明的程序"。
 
 > Instead of trying to produce a programme to simulate the adult mind, why not rather try to produce one which simulates the child's? If this were then subjected to an appropriate course of education one would obtain the adult brain.
+
+与其试图编写一个模拟**成年**心智的程序，何不试着做一个模拟**儿童**心智的？只要再让它接受一段适当的教育过程，就能得到成年人的大脑。
 
 <Sidenote kind="why">
 这是全文对今天最有直接关系的一段。图灵在 1950 年主张：不要手写智能，要造一个可学习的初始系统，然后训练它。他甚至算过工作量——按他自己每天写出约一千位程序的速度，六十个人稳定工作五十年可以完成，前提是"if nothing went into the wastepaper basket"（没有任何东西被扔进废纸篓）。他紧接着自己评论：显然需要更省力的方法。
@@ -216,6 +240,8 @@ import Prereq from '../../components/Prereq.astro';
 而全文真正的收尾是一句更克制的话——这才是论文的最后一句：
 
 > We can only see a short distance ahead, but we can see plenty there that needs to be done.
+
+我们只能看到前方很短的一段距离，但**在那段距离里，要做的事已经够多了**。
 
 <Check q="图灵建议如何造出能通过模仿游戏的机器？">
 不是直接编写一个模拟成年心智的程序，而是先造一个模拟儿童心智的系统——机制少、空白多——再让它经历一个适当的教育过程。今天的机器学习范式与这个建议同源。
