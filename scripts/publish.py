@@ -64,6 +64,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="only verify remote reachability, change nothing")
     args = ap.parse_args(argv)
 
+    # Title gate: refuse to publish clickbait or vague headlines.
+    lint = subprocess.run([sys.executable, 'scripts/lint_titles.py'],
+                          capture_output=True, text=True, cwd=str(REPO))
+    if lint.returncode != 0:
+        sys.stderr.write(lint.stdout or lint.stderr)
+        sys.stderr.write(chr(10) + 'refusing to publish: fix the titles above' + chr(10))
+        return 3
+
     token = load_token()
     push_url = f"https://x-access-token:{token}@{PROXY.split('://', 1)[1]}/{SLUG}.git"
     read_url = f"{PROXY}/{SLUG}.git"
