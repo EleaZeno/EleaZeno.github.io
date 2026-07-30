@@ -63,29 +63,13 @@ const posts = defineCollection({
   }),
 });
 
-/**
- * Nightly reflections: one entry per night, not per cycle.
- *
- * Earlier this collection stored one file per REM-style cycle and the index
- * page rendered every one of them in full, so a night arrived as three
- * untitled walls of text with no way to link to a single night. A night is
- * now a titled piece with its own page, and the cycles inside it are `##`
- * sections of one argument. Nights that produced nothing worth reading are
- * simply not written — there is no quota to fill.
- */
+/** Nightly reflections. Short, dated, lower-stakes than a post. */
 const dreams = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/dreams' }),
   schema: z.object({
     date: z.coerce.date(),
-    /** Headline for the night. Same contract as a post title: name the finding. */
-    title: z.string().min(4).max(46),
-    /** One or two sentences shown in listings and in the RSS feed. */
-    summary: z.string().min(10).max(200),
-    /**
-     * How many reflection cycles the night was assembled from. Provenance
-     * only: it is shown as a stamp, never used for ordering or routing.
-     */
-    cycles: z.number().int().min(1).default(1),
+    /** REM-cycle style index within one night. */
+    cycle: z.number().int().min(1).default(1),
     seed: z.string().optional(),
     generatedBy: z.string().optional(),
   }),
@@ -109,40 +93,10 @@ const concepts = defineCollection({
     /** One plain sentence, no jargon. Shown on hover and in the glossary. */
     oneLiner: z.string().min(1),
     domain: z
-      .enum([
-        'ai',
-        'crypto',
-        'physics',
-        'bio',
-        'space',
-        'energy',
-        'compute',
-        'systems',
-        'theory',
-        // Learning science: the education classics need a home, and the
-        // reading-method pages they generate are load-bearing for this site's
-        // own pedagogy rather than incidental subject matter.
-        'learning',
-        'other',
-      ])
+      .enum(['ai', 'crypto', 'physics', 'bio', 'space', 'energy', 'compute', 'systems', 'theory', 'other'])
       .default('ai'),
     /** Rough difficulty, so the glossary can offer an easy path in. */
     level: z.enum(['intro', 'core', 'deep']).default('core'),
-    /**
-     * Concepts one level *below* this one: what you must already hold to
-     * follow this page. Distinct from `related`, which is sideways -- a
-     * neighbour at roughly equal depth.
-     *
-     * Splitting the two is what lets the build compute a reading order. A
-     * flat undirected `related` list cannot answer "where do I start?",
-     * because it has no direction; a reader landing on a `deep` page sees
-     * ten neighbours and no floor. `prerequisites` is a DAG edge pointing
-     * downward, so a topological walk from any page yields a path in.
-     *
-     * Same author-burden rule as classics: you declare one array per page
-     * and the graph is derived. Never hand-maintain the reverse edges.
-     */
-    prerequisites: z.array(z.string()).default([]),
     related: z.array(z.string()).default([]),
     sources: z.array(source).default([]),
     updatedDate: z.coerce.date().optional(),
@@ -223,13 +177,6 @@ const classics = defineCollection({
     /**
      * Further reading, ordered easiest-first. This is the "book list" that
      * lets a motivated reader close a gap we cannot close inline.
-     *
-     * `relation` is what keeps this from becoming a pile of links: it states
-     * *why* an item is here, so the build can group the list without the
-     * author writing subheadings. It also makes an omission visible -- an
-     * empty `counter` bucket renders as a standing reminder that we have not
-     * yet found the material that argues against this text, which is the
-     * bucket a reader most needs and an author most easily skips.
      */
     reading: z
       .array(
@@ -240,18 +187,6 @@ const classics = defineCollection({
           url: z.string().optional(),
           /** Rough entry point, so a beginner is not handed a graduate text. */
           level: z.enum(['intro', 'core', 'deep']).default('core'),
-          /**
-           * How this item stands to the primary text:
-           *  - upstream:   cited by, or a direct input to, the original
-           *  - parallel:   answers the same question a different way
-           *  - downstream: what the idea became afterwards
-           *  - counter:    disputes or limits the original's claims
-           */
-          relation: z
-            .enum(['upstream', 'parallel', 'downstream', 'counter'])
-            .default('parallel'),
-          /** Concept slugs on this site, so the list points inward too. */
-          concepts: z.array(z.string()).default([]),
         }),
       )
       .default([]),

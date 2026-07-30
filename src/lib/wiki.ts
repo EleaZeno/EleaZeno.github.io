@@ -105,45 +105,6 @@ export interface GraphNode {
   mentionedBy: Mention[];
   /** Declared neighbours plus concepts that mention this one. */
   related: Concept[];
-  /** Directly declared floor: read these before this page. */
-  prerequisites: Concept[];
-  /**
-   * Full transitive floor in reading order (deepest foundation first,
-   * this page's immediate prerequisites last). This is the "where do I
-   * start" answer that an undirected `related` list cannot give.
-   */
-  path: Concept[];
-  /** Concepts that declare this one as their prerequisite. */
-  unlocks: Concept[];
-}
-
-/**
- * Walk `prerequisites` edges depth-first and return the transitive floor in
- * reading order: a concept always appears after everything it depends on.
- *
- * Cycles are tolerated rather than thrown on. A prerequisite loop is an
- * authoring mistake, but failing the whole build over one is worse than
- * emitting a usable (if arbitrary) order and letting check_wiki.py report it.
- */
-function readingPath(start: string, byId: Map<string, Concept>): Concept[] {
-  const out: Concept[] = [];
-  const done = new Set<string>();
-  const onStack = new Set<string>();
-
-  const visit = (id: string) => {
-    if (done.has(id) || onStack.has(id)) return;
-    onStack.add(id);
-    const c = byId.get(id);
-    if (c) {
-      for (const dep of c.data.prerequisites) visit(dep);
-      if (id !== start) out.push(c);
-    }
-    onStack.delete(id);
-    done.add(id);
-  };
-
-  visit(start);
-  return out;
 }
 
 /**
@@ -210,19 +171,7 @@ export async function conceptGraph(): Promise<Map<string, GraphNode>> {
       }
     }
 
-    const prerequisites = c.data.prerequisites
-      .map((id) => byId.get(id))
-      .filter((x): x is Concept => Boolean(x));
-    const unlocks = concepts.filter((o) => o.data.prerequisites.includes(c.id));
-
-    graph.set(c.id, {
-      concept: c,
-      mentionedBy,
-      related,
-      prerequisites,
-      path: readingPath(c.id, byId),
-      unlocks,
-    });
+    graph.set(c.id, { concept: c, mentionedBy, related });
   }
   return graph;
 }

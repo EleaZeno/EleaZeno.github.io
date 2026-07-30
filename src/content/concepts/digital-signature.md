@@ -4,7 +4,6 @@ aliases: ["digital signature", "签名", "digitally signing", "signature", "验�
 oneLiner: "用只有你知道的私钥给一段数据盖章，任何人都能用你公开的公钥验证这个章是真的、且数据没被改过。"
 domain: crypto
 level: intro
-prerequisites: ["public-key-cryptography", "key-pair"]
 related: ["public-key-cryptography", "hash-function"]
 sources: []
 ---

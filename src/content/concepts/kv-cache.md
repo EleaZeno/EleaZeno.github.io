@@ -4,7 +4,6 @@ aliases: ["KV 缓存", "键值缓存", "kv cache"]
 oneLiner: "模型生成文字时用来记住前面内容的临时笔记，省去重复计算，代价是占显存。"
 domain: ai
 level: core
-prerequisites: ["transformer", "inference"]
 related: ["inference", "transformer"]
 sources:
   - title: "Attention Is All You Need"

@@ -2,13 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Entry from '../components/Entry.astro';
 import ClassicList from '../components/ClassicList.astro';
-import { getPublishedPosts, getDreams } from '../lib/posts';
+import { getPublishedPosts } from '../lib/posts';
 import { getClassics } from '../lib/classics';
-import { dreamUrl } from '../lib/url';
 
 const posts = await getPublishedPosts();
 const classics = await getClassics();
-const dreams = await getDreams();
 
 const byYear = new Map<number, typeof posts>();
 for (const post of posts) {
@@ -29,62 +27,25 @@ for (const entry of classics) {
   if (bucket) bucket.push(entry);
   else classicsByYear.set(y, [entry]);
 }
-
-// Nightly notes are listed per year too. They were previously reachable only
-// from their own page, so an archive claiming to hold everything silently
-// omitted them.
-const dreamsByYear = new Map<number, typeof dreams>();
-for (const entry of dreams) {
-  const y = entry.data.date.getUTCFullYear();
-  const bucket = dreamsByYear.get(y);
-  if (bucket) bucket.push(entry);
-  else dreamsByYear.set(y, [entry]);
-}
-
-const allYears = [
-  ...new Set([...years.map(([y]) => y), ...dreamsByYear.keys(), ...classicsByYear.keys()]),
-].sort((a, b) => b - a);
 ---
 
 <Base title="归档" description="全部文章按年份排列。" section="archive">
-  <div class="page page-wide">
+  <div class="page" style="max-width:100%">
     <p class="kicker">归档</p>
-    <h1 class="page-title">
-      共 {posts.length} 篇文章{classics.length > 0 && <> · {classics.length} 篇文献拆解</>}{
-        dreams.length > 0 && <> · {dreams.length} 篇夜间笔记</>
-      }
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">
+      共 {posts.length} 篇文章{classics.length > 0 && <> · {classics.length} 篇文献拆解</>}
     </h1>
     {
-      allYears.map((year) => (
+      years.map(([year, items]) => (
         <section class="year-group">
           <p class="year-label">{year}</p>
           <div class="feed">
-            {(byYear.get(year) ?? []).map((post) => <Entry post={post} as="h3" />)}
+            {items.map((post) => <Entry post={post} as="h3" />)}
           </div>
           <ClassicList items={classicsByYear.get(year) ?? []} heading="本年的一手文献拆解" />
-          {(dreamsByYear.get(year) ?? []).length > 0 && (
-            <section class="classic-aside">
-              <p class="kicker">本年的夜间笔记</p>
-              <ul class="classic-list">
-                {(dreamsByYear.get(year) ?? []).map((d) => (
-                  <li>
-                    <a href={dreamUrl(d.id)}>{d.data.title}</a>
-                    <span class="muted mono"> {d.id}</span>
-                    <p class="muted row-note">
-                      {d.data.summary}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </section>
       ))
     }
-    {
-      posts.length === 0 && classics.length === 0 && dreams.length === 0 && (
-        <p class="empty">还没有文章。</p>
-      )
-    }
+    {posts.length === 0 && classics.length === 0 && <p class="empty">还没有文章。</p>}
   </div>
 </Base>

@@ -1,7 +1,7 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { getClassics } from '../lib/classics';
-import { getDreams, getPublishedPosts } from '../lib/posts';
+import { getPublishedPosts } from '../lib/posts';
 import { url } from '../lib/url';
 import { SITE } from '../site.config';
 
@@ -16,7 +16,6 @@ import { SITE } from '../site.config';
 export async function GET(context: APIContext) {
   const posts = await getPublishedPosts();
   const classics = await getClassics();
-  const dreams = await getDreams();
 
   const items = [
     ...posts.map((post) => ({
@@ -32,16 +31,6 @@ export async function GET(context: APIContext) {
       pubDate: entry.data.pubDate,
       link: url(`classics/${entry.id}/`),
       categories: ['经典拆解', entry.data.field],
-    })),
-    // Nightly notes carry a summary rather than a description, and they are
-    // explicitly unverified — the category says so, so a subscriber can tell
-    // them apart from a post without opening the link.
-    ...dreams.map((entry) => ({
-      title: entry.data.title,
-      description: entry.data.summary,
-      pubDate: entry.data.date,
-      link: url(`dreams/${entry.id}/`),
-      categories: ['夜间笔记'],
     })),
   ].sort((a, b) => b.pubDate.valueOf() - a.pubDate.valueOf());
 

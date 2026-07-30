@@ -6,7 +6,7 @@ import Stamp from '../components/Stamp.astro';
 import { getClassics } from '../lib/classics';
 import { getPublishedPosts, getDreams, tagCounts, formatDate } from '../lib/posts';
 import { SITE } from '../site.config';
-import { dreamUrl, tagUrl, url } from '../lib/url';
+import { tagUrl, url } from '../lib/url';
 
 const posts = await getPublishedPosts();
 const dreams = await getDreams();
@@ -31,7 +31,7 @@ const classics = await getClassics();
 
   {
     tags.length > 0 && (
-      <ul class="tags tags-lead">
+      <ul class="tags" style="margin-bottom:2.5rem">
         {tags.map(([t, n]) => (
           <li>
             <a class="tag" href={tagUrl(t)}>{t} <span class="muted">{n}</span></a>
@@ -55,7 +55,7 @@ const classics = await getClassics();
     classics.length > 0 && (
       <section class="home-classics">
         <p class="kicker">一手文献拆解</p>
-        <p class="muted deck">
+        <p class="muted" style="margin:0 0 1rem">
           读原始论文，不读转述。每篇标注一手来源与校验和，逐节对照原文。
         </p>
         <ul class="classic-list">
@@ -63,28 +63,24 @@ const classics = await getClassics();
             <li>
               <a href={url(`classics/${entry.id}`)}>{entry.data.title}</a>
               <span class="muted mono"> {entry.data.originalYear}</span>
-              <p class="muted deck-tight">{entry.data.description}</p>
+              <p class="muted" style="margin:0.25rem 0 0">{entry.data.description}</p>
             </li>
           ))}
         </ul>
-        <p class="more-link"><a href={url('classics')}>看全部拆解 →</a></p>
+        <p style="margin:1rem 0 0"><a href={url('classics')}>看全部拆解 →</a></p>
       </section>
     )
   }
 
   {
     latestDream && (
-      <section class="block-gap">
+      <section style="margin-top:3.5rem">
         <p class="kicker">最近的夜间笔记</p>
-        <h3 class="digest-title">
-          <a href={dreamUrl(latestDream.id)}>{latestDream.data.title}</a>
-        </h3>
-        <p class="muted deck-mid">{latestDream.data.summary}</p>
-        <p class="muted mono meta-line">
-          {formatDate(latestDream.data.date)}
-          {latestDream.data.cycles > 1 && <> · {latestDream.data.cycles} 轮</>}
+        <p class="muted" style="margin:0 0 0.5rem">
+          {formatDate(latestDream.data.date)} · cycle {latestDream.data.cycle}
+          {latestDream.data.seed && <> · {latestDream.data.seed}</>}
         </p>
-        <p class="more-link-flush"><a href={url('dreams')}>读全部夜间笔记 →</a></p>
+        <p style="margin:0"><a href={url('dreams')}>读全部夜间笔记 →</a></p>
       </section>
     )
   }

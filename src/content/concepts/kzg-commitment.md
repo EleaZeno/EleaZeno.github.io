@@ -4,7 +4,6 @@ aliases: ["KZG", "KZG commitment", "多项式承诺", "polynomial commitment"]
 oneLiner: "一小段数据（几十字节）就能锁定一大批数据，之后可以逐点证明某个片段确实属于它。"
 domain: crypto
 level: deep
-prerequisites: ["hash-function", "erasure-coding"]
 related: ["data-availability-sampling", "erasure-coding"]
 sources: []
 ---

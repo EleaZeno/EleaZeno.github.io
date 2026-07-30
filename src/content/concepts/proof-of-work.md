@@ -4,7 +4,6 @@ aliases: ["PoW", "工作量证明", "proof-of-work", "挖矿", "算力"]
 oneLiner: "用一段谁都能验证的算力开销当门票：做起来很贵，检查起来极便宜。"
 domain: crypto
 level: core
-prerequisites: ["hash-function", "hashrate"]
 related: ["hash-function", "double-spending"]
 sources: []
 ---

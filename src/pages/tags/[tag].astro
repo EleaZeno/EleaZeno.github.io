@@ -36,10 +36,10 @@ const { label, posts, classics } = Astro.props as Props;
 ---
 
 <Base title={`标签：${label}`} description={`与 ${label} 相关的文章。`} section="archive">
-  <div class="page page-wide">
+  <div class="page" style="max-width:100%">
     <p class="kicker">标签</p>
-    <h1 class="page-title">
-      {label} <span class="muted mono count">{posts.length + classics.length}</span>
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">
+      {label} <span class="muted mono" style="font-size:0.8rem">{posts.length + classics.length}</span>
     </h1>
     <div class="feed">
       {posts.map((post) => <Entry post={post} as="h3" />)}

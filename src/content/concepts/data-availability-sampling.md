@@ -4,7 +4,6 @@ aliases: ["DAS", "data availability sampling", "数据可用性"]
 oneLiner: "只随机抽查一小部分数据，就能高概率确认全部数据真的被公开了。"
 domain: crypto
 level: deep
-prerequisites: ["erasure-coding", "merkle-tree"]
 related: ["erasure-coding", "kzg-commitment"]
 sources:
   - title: "EIP-7594: PeerDAS"

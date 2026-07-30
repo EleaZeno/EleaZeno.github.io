@@ -7,7 +7,6 @@ import rehypeKatex from 'rehype-katex';
 import rehypeWikilink from './src/lib/rehype-wikilink.mjs';
 import rehypeClassicAnchors from './src/lib/rehype-classic-anchors.mjs';
 import rehypeTableScroll from './src/lib/rehype-table-scroll.mjs';
-import rehypeQuoteLang from './src/lib/rehype-quote-lang.mjs';
 
 // User site: https://eleazeno.github.io lives at the root, so BASE_PATH is '/'.
 // Both are still env-driven so the same tree can be built as a project site
@@ -35,9 +34,6 @@ export default defineConfig({
       rehypeClassicAnchors,
       // Wrap wide tables so they scroll instead of widening the page on phones.
       rehypeTableScroll,
-      // Mark English quote blocks so pop-up dictionaries, screen readers and
-      // line-breaking all pick the right language inside a zh-CN page.
-      rehypeQuoteLang,
     ],
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark-dimmed' },

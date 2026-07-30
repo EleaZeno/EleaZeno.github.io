@@ -11,17 +11,11 @@ export async function getPublishedPosts(): Promise<Post[]> {
   return posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 }
 
-/**
- * Nightly reflections, newest first.
- *
- * One entry per night, so date alone orders the collection. The id is the
- * date, which makes the tie-break on id a stable fallback rather than a
- * meaningful sort.
- */
+/** Nightly reflections, newest first, then by cycle. */
 export async function getDreams(): Promise<Dream[]> {
   const dreams = await getCollection('dreams');
   return dreams.sort(
-    (a, b) => b.data.date.valueOf() - a.data.date.valueOf() || b.id.localeCompare(a.id),
+    (a, b) => b.data.date.valueOf() - a.data.date.valueOf() || b.data.cycle - a.data.cycle,
   );
 }
 

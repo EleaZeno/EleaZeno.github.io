@@ -34,11 +34,6 @@ export function postUrl(id: string): string {
   return url(`posts/${id}`);
 }
 
-/** Href for one night of reflections. */
-export function dreamUrl(id: string): string {
-  return url(`dreams/${id}`);
-}
-
 /** Bare hostname, for showing provenance next to a citation. */
 export function hostOf(link: string): string {
   try {
