@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import Entry from '../components/Entry.astro';
 import Field from '../components/Field.astro';
 import Stamp from '../components/Stamp.astro';
-import { getCollection } from 'astro:content';
+import { getClassics } from '../lib/classics';
 import { getPublishedPosts, getDreams, tagCounts, formatDate } from '../lib/posts';
 import { SITE } from '../site.config';
 import { tagUrl, url } from '../lib/url';
@@ -12,9 +12,7 @@ const posts = await getPublishedPosts();
 const dreams = await getDreams();
 const tags = tagCounts(posts).slice(0, 12);
 const latestDream = dreams[0];
-const classics = (await getCollection('classics'))
-  .filter((e) => !e.data.draft)
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const classics = await getClassics();
 ---
 
 <Base section="home">

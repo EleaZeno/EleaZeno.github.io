@@ -3,13 +3,13 @@ import type { InferGetStaticPropsType } from 'astro';
 import Base from '../../layouts/Base.astro';
 import Entry from '../../components/Entry.astro';
 import ClassicList from '../../components/ClassicList.astro';
-import { getCollection } from 'astro:content';
+import { getClassics } from '../../lib/classics';
 import { getPublishedPosts, tagCounts } from '../../lib/posts';
 import { tagSlug } from '../../lib/url';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  const classics = (await getCollection('classics')).filter((e) => !e.data.draft);
+  const classics = await getClassics();
 
   // Tags live on both collections, so a tag page must consider both or a term
   // only used by a deconstruction would 404.
@@ -26,15 +26,7 @@ export const getStaticPaths = async () => {
     props: {
       label,
       posts: posts.filter((p) => p.data.tags.some((t) => tagSlug(t) === slug)),
-      classics: classics
-        .filter((e) => e.data.tags.some((t) => tagSlug(t) === slug))
-        .map((e) => ({
-          id: e.id,
-          title: e.data.title,
-          originalTitle: e.data.originalTitle,
-          originalYear: e.data.originalYear,
-          description: e.data.description,
-        })),
+      classics: classics.filter((e) => e.data.tags.some((t) => tagSlug(t) === slug)),
     },
   }));
 };

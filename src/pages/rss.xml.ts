@@ -1,6 +1,6 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import { getCollection } from 'astro:content';
+import { getClassics } from '../lib/classics';
 import { getPublishedPosts } from '../lib/posts';
 import { url } from '../lib/url';
 import { SITE } from '../site.config';
@@ -15,7 +15,7 @@ import { SITE } from '../site.config';
  */
 export async function GET(context: APIContext) {
   const posts = await getPublishedPosts();
-  const classics = (await getCollection('classics')).filter((e) => !e.data.draft);
+  const classics = await getClassics();
 
   const items = [
     ...posts.map((post) => ({

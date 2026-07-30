@@ -1,25 +1,17 @@
 ---
 /*
- * A compact list of classics deconstructions, for pages whose main body is a
- * post feed (tag pages, domain pages).
+ * A compact list of deconstructions, for pages whose main body is a post feed
+ * (tag pages, domain pages).
  *
- * Why not reuse Entry.astro: it takes a posts-collection entry and renders
- * post-shaped metadata (tags, reading time). A classic carries different
- * metadata (original title, year, primary source), so forcing it through Entry
- * would mean widening that component's contract for two call sites.
+ * Not Entry.astro: that renders post-shaped metadata (tags, reading time). A
+ * classic carries an original title and year instead, so routing it through
+ * Entry would mean widening that component's contract for two call sites.
  */
+import type { Classic } from '../lib/classics';
 import { url } from '../lib/url';
 
-interface Item {
-  id: string;
-  title: string;
-  originalTitle: string;
-  originalYear: string;
-  description: string;
-}
-
 interface Props {
-  items: Item[];
+  items: Classic[];
   heading?: string;
 }
 
@@ -31,13 +23,11 @@ const { items, heading = '相关的一手文献拆解' } = Astro.props as Props;
     <section class="classic-aside">
       <p class="kicker">{heading}</p>
       <ul class="classic-list">
-        {items.map((item) => (
+        {items.map(({ id, data }) => (
           <li>
-            <a href={url(`classics/${item.id}`)}>{item.title}</a>
-            <span class="muted mono"> {item.originalYear}</span>
-            <p class="muted" style="margin:0.2rem 0 0; font-size:0.85rem">
-              {item.originalTitle}
-            </p>
+            <a href={url(`classics/${id}`)}>{data.title}</a>
+            <span class="muted mono"> {data.originalYear}</span>
+            <p class="muted" style="margin:0.2rem 0 0; font-size:0.85rem">{data.originalTitle}</p>
           </li>
         ))}
       </ul>

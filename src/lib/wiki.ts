@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { getClassics } from './classics';
 import type { Term } from './autolink';
 
 export type Concept = CollectionEntry<'concepts'>;
@@ -117,9 +118,7 @@ export async function conceptGraph(): Promise<Map<string, GraphNode>> {
   const posts = (await getCollection('posts'))
     .filter((p) => import.meta.env.DEV || !p.data.draft)
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-  const classics = (await getCollection('classics'))
-    .filter((c) => import.meta.env.DEV || !c.data.draft)
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const classics = await getClassics();
 
   const byId = new Map(concepts.map((c) => [c.id, c]));
   const graph = new Map<string, GraphNode>();
