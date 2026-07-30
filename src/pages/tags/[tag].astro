@@ -1,0 +1,31 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts, tagCounts } from '../../lib/posts';
+import { tagSlug } from '../../lib/url';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPublishedPosts();
+  // Route on the slug, not the raw tag: raw tags can contain spaces, which
+  // would emit directories like `/tags/kv cache/` and break links.
+  return tagCounts(posts).map(([tag]) => ({
+    params: { tag: tagSlug(tag) },
+    props: { tag, posts: posts.filter((post) => post.data.tags.includes(tag)) },
+  }));
+}) satisfies GetStaticPaths;
+
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`标签: ${tag}`} description={`标签 ${tag} 下的全部文章。`}>
+  <h1>标签: {tag}</h1>
+  <p class="meta">{posts.length} 篇</p>
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li>
+        <PostCard post={post} />
+      </li>
+    ))}
+  </ul>
+</Base>

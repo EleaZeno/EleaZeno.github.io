@@ -1,0 +1,39 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { formatDate, getPublishedPosts } from '../../lib/posts';
+import { tagUrl } from '../../lib/url';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Base title={post.data.title} description={post.data.description} type="article">
+  <article>
+    <h1>{post.data.title}</h1>
+    <div class="meta">
+      <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+      {
+        post.data.updatedDate && (
+          <span>更新于 <time datetime={post.data.updatedDate.toISOString()}>{formatDate(post.data.updatedDate)}</time></span>
+        )
+      }
+    </div>
+    {
+      post.data.tags.length > 0 && (
+        <ul class="tags" aria-label="标签">
+          {post.data.tags.map((tag) => (
+            <li><a href={tagUrl(tag)}>{tag}</a></li>
+          ))}
+        </ul>
+      )
+    }
+    <Content />
+  </article>
+</Base>

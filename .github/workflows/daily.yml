@@ -1,0 +1,72 @@
+name: Daily post
+
+on:
+  schedule:
+    # 22:10 UTC = 06:10 Asia/Shanghai next day. GitHub's scheduler is
+    # best-effort: runs can be delayed 10+ min or skipped under load.
+    - cron: '10 22 * * *'
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Override the rotated topic (optional)'
+        required: false
+        type: string
+      post_date:
+        description: 'YYYY-MM-DD (optional, defaults to today in CST)'
+        required: false
+        type: string
+
+# Only need to push the generated markdown back to the default branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-post
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Generate post
+        id: gen
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          TOPIC: ${{ inputs.topic }}
+          POST_DATE: ${{ inputs.post_date }}
+        run: |
+          set +e
+          python3 scripts/generate_post.py
+          code=$?
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          # 2 = a post for today already exists; that is not a failure.
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+            exit "$code"
+          fi
+
+      - name: Commit and push
+        if: steps.gen.outputs.exit_code == '0'
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/content/posts
+          if git diff --cached --quiet; then
+            echo 'Nothing staged; skipping commit.'
+            exit 0
+          fi
+          git commit -m "post: ${{ steps.gen.outputs.post_title || 'daily update' }}"
+          # Rebase in case the deploy workflow or a manual push landed first.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

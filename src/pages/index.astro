@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPublishedPosts, tagCounts } from '../lib/posts';
+import { tagUrl, url } from '../lib/url';
+import { SITE } from '../site.config';
+
+const posts = await getPublishedPosts();
+const recent = posts.slice(0, 20);
+const tags = tagCounts(posts).slice(0, 12);
+---
+
+<Base>
+  <h1>{SITE.title}</h1>
+  <p class="meta">{SITE.description}</p>
+
+  {
+    tags.length > 0 && (
+      <ul class="tags" aria-label="常用标签">
+        {tags.map(([tag, count]) => (
+          <li>
+            <a href={tagUrl(tag)}>{tag} · {count}</a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {
+    posts.length === 0 ? (
+      <p>还没有文章。跑一次 <code>scripts/generate_post.py</code> 就会产出第一篇。</p>
+    ) : (
+      <ul class="post-list">
+        {recent.map((post) => (
+          <li>
+            <PostCard post={post} />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {posts.length > recent.length && <p><a href={url('archive')}>查看全部 {posts.length} 篇 →</a></p>}
+</Base>

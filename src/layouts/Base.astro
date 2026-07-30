@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+import { SITE } from '../site.config';
+import { url } from '../lib/url';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Rendered into <head> as og:type. */
+  type?: 'website' | 'article';
+}
+
+const { title, description = SITE.description, type = 'website' } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+// Astro.site has no path component, so resolve the feed against the base path.
+const feedHref = new URL(url('rss.xml'), Astro.site);
+const homeHref = url('');
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href={url('sitemap-index.xml')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${SITE.title} RSS`}
+      href={feedHref}
+    />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="site-header">
+      <div class="wrap inner">
+        <a class="site-title" href={homeHref}>{SITE.title}</a>
+        <nav class="site-nav" aria-label="站点导航">
+          <a href={homeHref}>首页</a>
+          <a href={url('archive')}>归档</a>
+          <a href={feedHref}>RSS</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          © {SITE.since}–{new Date().getFullYear()} {SITE.author} · 内容由 AI 生成整理，可能有误，请自行核实。
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

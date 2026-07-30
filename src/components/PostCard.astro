@@ -1,0 +1,18 @@
+---
+import { formatDate, type Post } from '../lib/posts';
+import { postUrl } from '../lib/url';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+---
+
+<h2><a href={postUrl(post.id)}>{post.data.title}</a></h2>
+<div class="meta">
+  <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+  {post.data.draft && <span class="draft-badge">草稿</span>}
+  {post.data.tags.length > 0 && <span>{post.data.tags.join(' / ')}</span>}
+</div>
+<p>{post.data.description}</p>

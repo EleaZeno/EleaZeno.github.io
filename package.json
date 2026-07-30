@@ -1,0 +1,22 @@
+{
+  "name": "ai-daily-blog",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/rss": "4.0.19",
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "7.1.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.5",
+    "typescript": "^5.9.3"
+  }
+}
