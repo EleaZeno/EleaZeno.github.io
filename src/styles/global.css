@@ -368,6 +368,15 @@ a:hover {
   padding-top: 2.5rem;
 }
 
+/*
+ * Without sidenotes there is no margin to reserve, so the text column is sized
+ * for reading directly: --measure is the target, but it may grow into the space
+ * the margin would have used rather than leaving it empty.
+ */
+.layout:not(.has-margin-notes) {
+  grid-template-columns: var(--rail) minmax(0, var(--measure-wide));
+}
+
 .article {
   min-width: 0;
   grid-column: 2;
@@ -394,9 +403,14 @@ a:hover {
  *
  * The prose column reserves the space by padding its right edge, so a floated
  * note pulled out by that same amount lands cleanly outside the text.
+ *
+ * Only pages that actually carry sidenotes reserve the margin. Reserving it
+ * unconditionally left dreams/posts (which have no sidenotes) with a permanent
+ * empty strip on the right while their text was squeezed into --measure, which
+ * read as text crammed against the left edge.
  */
-.prose,
-.classic-body {
+.has-margin-notes .prose,
+.has-margin-notes .classic-body {
   padding-right: calc(var(--margin) + var(--margin-gap));
 }
 
@@ -491,6 +505,28 @@ a:hover {
   padding-top: 0.9rem;
   border-top: 1px solid var(--rule);
   line-height: 1.35;
+  counter-increment: section;
+}
+
+.prose h2::before {
+  content: counter(section, decimal-leading-zero);
+  position: absolute;
+  top: 0.9rem;
+  left: -2.6rem;
+  width: 1.9rem;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--fg-faint);
+  /* Decorative: the heading text already conveys structure. */
+  speak: never;
+}
+
+/* No room for a margin numeral once the rail collapses. */
+@media (max-width: 66rem) {
+  .prose h2::before { display: none; }
 }
 
 .prose h3 {
@@ -943,12 +979,25 @@ ul.plain li {
  * column drops its reserved right padding at the same time.
  */
 @media (max-width: 76rem) {
+  /*
+   * Cap the column, never 1fr. With 1fr the text grew as the viewport shrank
+   * (58.5rem of grid became a 55rem text column at 1200px, versus 40rem at
+   * 1440px), so narrowing the window made lines longer.
+   *
+   * Sidenote pages cap at --measure, matching what they get on desktop: their
+   * notes have just moved inline, and --wide cannot fit both a 46rem column and
+   * the 18.5rem margin, so widening here would only re-create the jump.
+   */
   .layout {
-    grid-template-columns: var(--rail) minmax(0, 1fr);
+    grid-template-columns: var(--rail) minmax(0, var(--measure));
   }
 
-  .prose,
-  .classic-body { padding-right: 0; }
+  .layout:not(.has-margin-notes) {
+    grid-template-columns: var(--rail) minmax(0, var(--measure-wide));
+  }
+
+  .has-margin-notes .prose,
+  .has-margin-notes .classic-body { padding-right: 0; }
 
   .sidenote {
     float: none;
@@ -970,10 +1019,25 @@ ul.plain li {
   .sidenote[data-kind='caution'] { border-top-color: var(--warn); }
 }
 
-@media (max-width: 62rem) {
+/*
+ * 66rem, not 62rem: two columns need rail(12.5) + gap(3.25) + shell padding(3.5)
+ * + a full --measure-wide(46) = 65.25rem. Collapsing at 62rem left a dead band
+ * (~1000-1044px) where the column was squeezed to 42.75rem, narrower than the
+ * 46rem it snapped back to the instant the rail dropped away.
+ */
+@media (max-width: 66rem) {
+  /*
+   * Rail collapses above the text here, so the text column is the whole shell,
+   * still bounded by --measure-wide and centred rather than left-hugging.
+   */
   .layout {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, var(--measure));
+    justify-content: center;
     gap: 2rem;
+  }
+
+  .layout:not(.has-margin-notes) {
+    grid-template-columns: minmax(0, var(--measure-wide));
   }
 
   .article { grid-column: 1; }

@@ -31,8 +31,9 @@ JARGON_OPENERS=('是一种','是指','指的是','一种用于','一类')
 def main():
     ids={}
     body={}
-    for p in sorted(glob.glob(D+'*.md')):
-        i=os.path.basename(p)[:-3]
+    # .mdx included: concepts carrying <Sidenote> must be MDX (see content.config.ts).
+    for p in sorted(glob.glob(D+'*.md')+glob.glob(D+'*.mdx')):
+        i=os.path.splitext(os.path.basename(p))[0]
         d,b=fm(open(p,encoding='utf-8').read())
         ids[i]=d
         body[i]=b
@@ -55,8 +56,11 @@ def main():
         elif any(j in s[:14] for j in JARGON_OPENERS):
             errs.append('summary opens with jargon, not plain language')
         b=body.get(i,'')
-        if '## 一句话' not in b:
-            errs.append('missing 一句话 opener section')
+        heads=[h.strip() for h in re.findall(r'(?m)^##\s+(.+)$', b)]
+        has_oneliner='## 一句话' in b
+        has_mech=any('机制' in h for h in heads)
+        if not has_oneliner and not has_mech:
+            errs.append('opener neither 一句话 nor problem-first (needs a 机制 section after a hook)')
         names=[d.get('title','').strip().strip('"')]
         names+=d.get('aliases_inline',[])
         cited=any(any(n and n in t for n in names) for t in posts.values())

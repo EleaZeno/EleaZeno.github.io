@@ -7,6 +7,7 @@ import Toc from '../../components/Toc.astro';
 import Stamp from '../../components/Stamp.astro';
 import { formatDate, readingMinutes, DOMAIN_LABELS, getPublishedPosts } from '../../lib/posts';
 import { tagUrl, hostOf, postUrl, domainUrl } from '../../lib/url';
+import { hasSidenotes } from '../../lib/sidenotes';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
@@ -24,6 +25,7 @@ export const getStaticPaths = async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { post, newer, older } = Astro.props as Props;
 const { Content, headings } = await render(post);
+const marginNotes = hasSidenotes(post.body);
 const mins = readingMinutes(post.body ?? '');
 
 // `take` is authored as markdown in frontmatter, so it needs rendering too.
@@ -60,7 +62,7 @@ const jsonLd = {
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
-  <div class="layout">
+  <div class:list={['layout', marginNotes && 'has-margin-notes']}>
     <article class="article">
       <header class="article-head">
         <h1>{post.data.title}</h1>

@@ -24,6 +24,12 @@
    * claims that space for annotation instead of widening the text.
    */
   --measure: 40rem;
+  /*
+   * Upper bound for text that has no sidenote margin beside it. Wider than
+   * --measure because a lone column can carry a slightly longer line, but
+   * still bounded: unbounded growth is what produced 55rem+ lines mid-band.
+   */
+  --measure-wide: 46rem;
   --margin: 16.5rem;
   --margin-gap: 2rem;
   --wide: 78rem;

@@ -83,7 +83,9 @@ const dreams = defineCollection({
  * of re-explaining it, which is what makes the terms compound over time.
  */
 const concepts = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/concepts' }),
+  // .mdx too: a concept that carries <Sidenote> must be MDX, otherwise the tag
+  // passes through as inert raw HTML and its markdown links stay literal.
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/concepts' }),
   schema: z.object({
     title: z.string().min(1),
     /** Other spellings that should also auto-link here (EN/CN, abbreviations). */

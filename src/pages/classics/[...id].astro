@@ -8,6 +8,7 @@ import Stamp from '../../components/Stamp.astro';
 import { formatDate } from '../../lib/posts';
 import { getClassics } from '../../lib/classics';
 import { url, hostOf, tagUrl } from '../../lib/url';
+import { hasSidenotes } from '../../lib/sidenotes';
 
 export const getStaticPaths = async () => {
   const sorted = await getClassics();
@@ -17,6 +18,7 @@ export const getStaticPaths = async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { entry } = Astro.props as Props;
 const { Content, headings } = await render(entry);
+const marginNotes = hasSidenotes(entry.body);
 const d = entry.data;
 
 const takeHtml = d.take ? await marked.parse(d.take) : '';
@@ -89,7 +91,7 @@ const jsonLd = {
 <Base title={d.title} description={d.description} type="article" section="classics">
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
-  <div class="layout">
+  <div class:list={['layout', marginNotes && 'has-margin-notes']}>
     <article class="article">
       <header class="article-head">
         <p class="kicker">经典拆解</p>

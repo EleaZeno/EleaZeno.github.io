@@ -6,6 +6,7 @@ import Stamp from '../../components/Stamp.astro';
 import { getConcepts, conceptGraph, LEVEL_LABELS } from '../../lib/wiki';
 import { DOMAIN_LABELS, formatDate } from '../../lib/posts';
 import { url, postUrl } from '../../lib/url';
+import { hasSidenotes } from '../../lib/sidenotes';
 
 export async function getStaticPaths() {
   const concepts = await getConcepts();
@@ -19,6 +20,7 @@ export async function getStaticPaths() {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { concept, node } = Astro.props as Props;
 const { Content } = await render(concept);
+const marginNotes = hasSidenotes(concept.body);
 const d = concept.data;
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -32,7 +34,7 @@ const jsonLd = {
 <Base title={d.title} description={d.oneLiner} section="concepts">
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
-  <div class="layout">
+  <div class:list={['layout', marginNotes && 'has-margin-notes']}>
     <article class="article concept">
       <header class="article-head">
         <p class="kicker">词条 · {DOMAIN_LABELS[d.domain] ?? d.domain} · {LEVEL_LABELS[d.level]}</p>
