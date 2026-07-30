@@ -1,9 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import Entry from '../components/Entry.astro';
+import ClassicList from '../components/ClassicList.astro';
 import { getPublishedPosts } from '../lib/posts';
+import { getClassics } from '../lib/classics';
 
 const posts = await getPublishedPosts();
+const classics = await getClassics();
 
 const byYear = new Map<number, typeof posts>();
 for (const post of posts) {
@@ -13,12 +16,25 @@ for (const post of posts) {
   else byYear.set(y, [post]);
 }
 const years = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
+
+// Deconstructions are grouped separately rather than mixed into the year feed:
+// they are dated by when they were written, but a reader looks for them by which
+// paper they cover, not by month.
+const classicsByYear = new Map<number, typeof classics>();
+for (const entry of classics) {
+  const y = entry.data.pubDate.getUTCFullYear();
+  const bucket = classicsByYear.get(y);
+  if (bucket) bucket.push(entry);
+  else classicsByYear.set(y, [entry]);
+}
 ---
 
 <Base title="归档" description="全部文章按年份排列。" section="archive">
   <div class="page" style="max-width:100%">
     <p class="kicker">归档</p>
-    <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">共 {posts.length} 篇</h1>
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">
+      共 {posts.length} 篇文章{classics.length > 0 && <> · {classics.length} 篇文献拆解</>}
+    </h1>
     {
       years.map(([year, items]) => (
         <section class="year-group">
@@ -26,9 +42,10 @@ const years = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
           <div class="feed">
             {items.map((post) => <Entry post={post} as="h3" />)}
           </div>
+          <ClassicList items={classicsByYear.get(year) ?? []} heading="本年的一手文献拆解" />
         </section>
       ))
     }
-    {posts.length === 0 && <p class="empty">还没有文章。</p>}
+    {posts.length === 0 && classics.length === 0 && <p class="empty">还没有文章。</p>}
   </div>
 </Base>

@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeWikilink from './src/lib/rehype-wikilink.mjs';
 import rehypeClassicAnchors from './src/lib/rehype-classic-anchors.mjs';
+import rehypeTableScroll from './src/lib/rehype-table-scroll.mjs';
 
 // User site: https://eleazeno.github.io lives at the root, so BASE_PATH is '/'.
 // Both are still env-driven so the same tree can be built as a project site
@@ -31,6 +32,8 @@ export default defineConfig({
       [rehypeWikilink, { base: BASE_PATH }],
       // Section ids for classics, so annotations can be deep-linked.
       rehypeClassicAnchors,
+      // Wrap wide tables so they scroll instead of widening the page on phones.
+      rehypeTableScroll,
     ],
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark-dimmed' },

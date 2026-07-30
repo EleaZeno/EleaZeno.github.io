@@ -123,7 +123,12 @@ a:hover {
 
 .masthead nav {
   display: flex;
-  gap: 1.15rem;
+  /* Six uppercase mono items need ~405px of min-content; the shell offers 283px
+     at 320px viewport. Without wrapping, nav pushed past the shell on every
+     iPhone width. */
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0.5rem 1.15rem;
   font-family: var(--mono);
   font-size: 0.76rem;
   letter-spacing: 0.06em;
@@ -133,8 +138,12 @@ a:hover {
 .masthead nav a {
   color: var(--fg-dim);
   border: 0;
-  padding-bottom: 2px;
+  /* Touch target: 0.76rem mono text is ~12px tall, so pad to a 44px-tall row
+     without changing the visual baseline. */
+  padding: 0.6rem 0 calc(0.6rem + 2px);
+  margin: -0.6rem 0;
   border-bottom: 1px solid transparent;
+  background-clip: padding-box;
 }
 
 .masthead nav a:hover,
@@ -584,6 +593,21 @@ a:hover {
   font-size: 0.79rem;
 }
 
+/* Probability tables are mono and multi-column; on a phone they exceed the
+   column and previously pushed the whole page sideways. Scroll the table, not
+   the document. tabindex on the wrapper (set in markup) keeps it keyboard
+   reachable. */
+.prose .table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.2rem 0;
+}
+
+.prose .table-scroll table {
+  margin: 0;
+}
+
 .prose th,
 .prose td {
   text-align: left;
@@ -608,7 +632,11 @@ a:hover {
 
 .katex-display {
   overflow-x: auto;
-  overflow-y: hidden;
+  /* Not overflow-y:hidden -- the qz cases block and the Poisson sum are tall
+     enough that hiding vertical overflow clips their braces. */
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 0.4rem 0;
 }
 

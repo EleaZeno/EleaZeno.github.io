@@ -45,8 +45,15 @@ def norm(s: str) -> str:
 
 
 def _skeleton(s: str) -> str:
-    """Letters and digits only, lowercased — punctuation and spacing dropped."""
-    return re.sub(r"[^a-z0-9]+", "", s.lower())
+    """Drop only what PDF extraction actually perturbs: whitespace.
+
+    An earlier version stripped all punctuation. That silenced the line-break
+    artefacts, but it also made the gate blind to real punctuation errors --
+    it passed "as follows: [8]" when the paper reads "as follows [8]:".
+    Citation marker placement is load-bearing in a deconstruction, so only
+    whitespace is normalised away here.
+    """
+    return re.sub(r"\s+", "", s)
 
 
 def english_blockquotes(mdx: str) -> list[str]:

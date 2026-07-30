@@ -6,12 +6,11 @@ import Base from '../../layouts/Base.astro';
 import Toc from '../../components/Toc.astro';
 import Stamp from '../../components/Stamp.astro';
 import { formatDate } from '../../lib/posts';
-import { url, hostOf } from '../../lib/url';
+import { getClassics } from '../../lib/classics';
+import { url, hostOf, tagUrl } from '../../lib/url';
 
 export const getStaticPaths = async () => {
-  const isProd = import.meta.env.PROD;
-  const all = await getCollection('classics', ({ data }) => !(isProd && data.draft));
-  const sorted = all.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const sorted = await getClassics();
   return sorted.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
 };
 
@@ -131,6 +130,18 @@ const jsonLd = {
             </div>
           )}
         </dl>
+
+        {
+          d.tags.length > 0 && (
+            <ul class="tags" style="margin:1.25rem 0 0">
+              {d.tags.map((t) => (
+                <li>
+                  <a class="tag" href={tagUrl(t)}>{t}</a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
       </header>
 
       <section class="gate">
