@@ -70,3 +70,4 @@ python3 scripts/reader_model.py add-candidate "形式化验证在编译器里的
 python3 scripts/reader_model.py profile      # 当前画像
 python3 scripts/reader_model.py suggest      # 下次可能写什么
 ```
+
