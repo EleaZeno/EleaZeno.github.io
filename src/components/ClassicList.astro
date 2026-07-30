@@ -1,0 +1,46 @@
+---
+/*
+ * A compact list of classics deconstructions, for pages whose main body is a
+ * post feed (tag pages, domain pages).
+ *
+ * Why not reuse Entry.astro: it takes a posts-collection entry and renders
+ * post-shaped metadata (tags, reading time). A classic carries different
+ * metadata (original title, year, primary source), so forcing it through Entry
+ * would mean widening that component's contract for two call sites.
+ */
+import { url } from '../lib/url';
+
+interface Item {
+  id: string;
+  title: string;
+  originalTitle: string;
+  originalYear: string;
+  description: string;
+}
+
+interface Props {
+  items: Item[];
+  heading?: string;
+}
+
+const { items, heading = '相关的一手文献拆解' } = Astro.props as Props;
+---
+
+{
+  items.length > 0 && (
+    <section class="classic-aside">
+      <p class="kicker">{heading}</p>
+      <ul class="classic-list">
+        {items.map((item) => (
+          <li>
+            <a href={url(`classics/${item.id}`)}>{item.title}</a>
+            <span class="muted mono"> {item.originalYear}</span>
+            <p class="muted" style="margin:0.2rem 0 0; font-size:0.85rem">
+              {item.originalTitle}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

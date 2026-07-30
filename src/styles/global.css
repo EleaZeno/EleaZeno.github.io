@@ -1378,3 +1378,65 @@ ul.plain li {
   padding: 0.7rem 1rem;
   margin: 1.25rem 0 1.5rem;
 }
+
+
+/* ---- Home: classics teaser -------------------------------------------- */
+/* Deconstructions are the slowest pieces to write and the easiest to miss,
+   so the home page names them explicitly instead of hiding them behind nav. */
+.home-classics {
+  margin-top: 3.5rem;
+}
+
+.classic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.classic-list > li {
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--rule);
+}
+
+.classic-list > li > a {
+  font-weight: 600;
+}
+
+/* Marks a backlink as pointing at a classics deconstruction rather than a post. */
+.badge-classic {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-size: 0.7rem;
+  color: var(--fg-dim);
+  vertical-align: 0.08em;
+}
+
+/* ---- Classics list on tag / domain pages ------------------------------ */
+.classic-aside {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.classic-aside .classic-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.classic-aside .classic-list li + li {
+  margin-top: 0.9rem;
+}
+
+.checksum-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--fg-faint);
+  max-width: 46ch;
+}

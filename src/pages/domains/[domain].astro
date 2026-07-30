@@ -2,19 +2,40 @@
 import type { InferGetStaticPropsType } from 'astro';
 import Base from '../../layouts/Base.astro';
 import Entry from '../../components/Entry.astro';
+import ClassicList from '../../components/ClassicList.astro';
+import { getCollection } from 'astro:content';
 import { getPublishedPosts, DOMAIN_LABELS } from '../../lib/posts';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  const domains = [...new Set(posts.map((p) => p.data.domain))];
+  const classics = (await getCollection('classics')).filter((e) => !e.data.draft);
+
+  // Classics carry `field` with the same vocabulary as a post's `domain`, so a
+  // domain page should surface both kinds of writing on that subject.
+  const domains = [
+    ...new Set([...posts.map((p) => p.data.domain), ...classics.map((e) => e.data.field)]),
+  ];
+
   return domains.map((domain) => ({
     params: { domain },
-    props: { domain, posts: posts.filter((p) => p.data.domain === domain) },
+    props: {
+      domain,
+      posts: posts.filter((p) => p.data.domain === domain),
+      classics: classics
+        .filter((e) => e.data.field === domain)
+        .map((e) => ({
+          id: e.id,
+          title: e.data.title,
+          originalTitle: e.data.originalTitle,
+          originalYear: e.data.originalYear,
+          description: e.data.description,
+        })),
+    },
   }));
 };
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { domain, posts } = Astro.props as Props;
+const { domain, posts, classics } = Astro.props as Props;
 const label = DOMAIN_LABELS[domain] ?? domain;
 ---
 
@@ -22,10 +43,11 @@ const label = DOMAIN_LABELS[domain] ?? domain;
   <header class="page">
     <p class="kicker">领域</p>
     <h1>{label}</h1>
-    <p class="muted mono">{posts.length} 篇</p>
+    <p class="muted mono">{posts.length + classics.length} 篇</p>
   </header>
 
   <div class="feed">
     {posts.map((post) => <Entry post={post} as="h2" />)}
   </div>
+  <ClassicList items={classics} />
 </Base>

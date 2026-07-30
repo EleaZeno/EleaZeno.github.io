@@ -65,10 +65,13 @@ const jsonLd = {
         <section class="backlinks">
           <h2>提到这个词条的文章</h2>
           <ul>
-            {node.mentionedBy.map((p) => (
+            {node.mentionedBy.map((m) => (
               <li>
-                <a href={postUrl(p.id)}>{p.data.title}</a>
-                <span class="muted mono"> {formatDate(p.data.pubDate)}</span>
+                <a href={m.kind === 'classic' ? url('classics/' + m.id) : postUrl(m.id)}>
+                  {m.title}
+                </a>
+                {m.kind === 'classic' && <span class="badge-classic">经典拆解</span>}
+                <span class="muted mono"> {formatDate(m.date)}</span>
               </li>
             ))}
           </ul>

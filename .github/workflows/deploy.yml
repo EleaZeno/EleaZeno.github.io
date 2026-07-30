@@ -46,6 +46,12 @@ jobs:
       - name: Verify links and citations
         run: python3 scripts/check_links.py
 
+      # A deconstruction's whole value is that the quoted original is exact, so
+      # a drifted quote is a build failure rather than a copy-editing nit. Runs
+      # on static files only; no workflow inputs are interpolated.
+      - name: Verify classics quotes against primary sources
+        run: python3 scripts/check_quotes.py
+
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist

@@ -84,10 +84,24 @@ export const LEVEL_LABELS: Record<string, string> = {
   deep: '深入',
 };
 
+/**
+ * A page that mentions a concept.
+ *
+ * Both day-to-day posts and classics deconstructions cite terms, and a reader
+ * landing on a concept wants either kind. Carrying the collection here lets the
+ * concept page build the right URL without a second lookup.
+ */
+export interface Mention {
+  kind: 'post' | 'classic';
+  id: string;
+  title: string;
+  date: Date;
+}
+
 export interface GraphNode {
   concept: Concept;
-  /** Posts that mention this term, newest first. */
-  mentionedBy: Array<CollectionEntry<'posts'>>;
+  /** Posts and classics that mention this term, newest first. */
+  mentionedBy: Mention[];
   /** Declared neighbours plus concepts that mention this one. */
   related: Concept[];
 }
@@ -103,14 +117,39 @@ export async function conceptGraph(): Promise<Map<string, GraphNode>> {
   const posts = (await getCollection('posts'))
     .filter((p) => import.meta.env.DEV || !p.data.draft)
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const classics = (await getCollection('classics'))
+    .filter((c) => import.meta.env.DEV || !c.data.draft)
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
   const byId = new Map(concepts.map((c) => [c.id, c]));
   const graph = new Map<string, GraphNode>();
 
   for (const c of concepts) {
-    const mentionedBy = posts.filter((p) =>
-      mentions(`${p.data.title} ${p.data.description} ${p.body ?? ''} ${p.data.take ?? ''}`, c),
-    );
+    const mentionedBy: Mention[] = [
+      ...posts
+        .filter((p) =>
+          mentions(`${p.data.title} ${p.data.description} ${p.body ?? ''} ${p.data.take ?? ''}`, c),
+        )
+        .map((p) => ({
+          kind: 'post' as const,
+          id: p.id,
+          title: p.data.title,
+          date: p.data.pubDate,
+        })),
+      ...classics
+        .filter((e) =>
+          mentions(
+            `${e.data.title} ${e.data.originalTitle} ${e.data.description} ${e.body ?? ''}`,
+            c,
+          ),
+        )
+        .map((e) => ({
+          kind: 'classic' as const,
+          id: e.id,
+          title: e.data.title,
+          date: e.data.pubDate,
+        })),
+    ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 
     // Declared neighbours first (curated), then discovered ones.
     const related: Concept[] = [];

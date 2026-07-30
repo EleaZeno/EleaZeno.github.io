@@ -127,6 +127,15 @@ const classics = defineCollection({
     primary: source,
     /** Checksum of the exact artifact we read, when it is a fixed file. */
     primaryChecksum: z.string().optional(),
+    /**
+     * What the checksum was actually computed over.
+     *
+     * The canonical URL and the file actually fetched are not always the same
+     * host (mirrors, CDNs, blocked networks). Stating the provenance keeps the
+     * checksum honest: it proves which bytes were read, not that the canonical
+     * host serves those bytes.
+     */
+    primaryChecksumNote: z.string().optional(),
     sources: z.array(source).default([]),
     /**
      * Concepts a reader needs *before* section 1. Slugs into the concepts

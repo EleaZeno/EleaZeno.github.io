@@ -125,6 +125,9 @@ const jsonLd = {
             <div>
               <dt>校验</dt>
               <dd class="mono checksum">{d.primaryChecksum}</dd>
+              {d.primaryChecksumNote && (
+                <dd class="checksum-note">{d.primaryChecksumNote}</dd>
+              )}
             </div>
           )}
         </dl>

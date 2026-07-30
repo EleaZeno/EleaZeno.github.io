@@ -2,36 +2,56 @@
 import type { InferGetStaticPropsType } from 'astro';
 import Base from '../../layouts/Base.astro';
 import Entry from '../../components/Entry.astro';
+import ClassicList from '../../components/ClassicList.astro';
+import { getCollection } from 'astro:content';
 import { getPublishedPosts, tagCounts } from '../../lib/posts';
 import { tagSlug } from '../../lib/url';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  // Group by slug so tags differing only in case/spacing share one page.
-  const bySlug = new Map<string, { label: string; posts: typeof posts }>();
-  for (const [tag] of tagCounts(posts)) {
-    const slug = tagSlug(tag);
-    const hit = posts.filter((p) => p.data.tags.some((t) => tagSlug(t) === slug));
-    if (!bySlug.has(slug)) bySlug.set(slug, { label: tag, posts: hit });
+  const classics = (await getCollection('classics')).filter((e) => !e.data.draft);
+
+  // Tags live on both collections, so a tag page must consider both or a term
+  // only used by a deconstruction would 404.
+  const labels = new Map<string, string>();
+  for (const [tag] of tagCounts(posts)) labels.set(tagSlug(tag), tag);
+  for (const entry of classics) {
+    for (const tag of entry.data.tags) {
+      if (!labels.has(tagSlug(tag))) labels.set(tagSlug(tag), tag);
+    }
   }
-  return [...bySlug.entries()].map(([slug, { label, posts: hit }]) => ({
+
+  return [...labels.entries()].map(([slug, label]) => ({
     params: { tag: slug },
-    props: { label, posts: hit },
+    props: {
+      label,
+      posts: posts.filter((p) => p.data.tags.some((t) => tagSlug(t) === slug)),
+      classics: classics
+        .filter((e) => e.data.tags.some((t) => tagSlug(t) === slug))
+        .map((e) => ({
+          id: e.id,
+          title: e.data.title,
+          originalTitle: e.data.originalTitle,
+          originalYear: e.data.originalYear,
+          description: e.data.description,
+        })),
+    },
   }));
 };
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { label, posts } = Astro.props as Props;
+const { label, posts, classics } = Astro.props as Props;
 ---
 
 <Base title={`标签：${label}`} description={`与 ${label} 相关的文章。`} section="archive">
   <div class="page" style="max-width:100%">
     <p class="kicker">标签</p>
     <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">
-      {label} <span class="muted mono" style="font-size:0.8rem">{posts.length}</span>
+      {label} <span class="muted mono" style="font-size:0.8rem">{posts.length + classics.length}</span>
     </h1>
     <div class="feed">
       {posts.map((post) => <Entry post={post} as="h3" />)}
     </div>
+    <ClassicList items={classics} />
   </div>
 </Base>

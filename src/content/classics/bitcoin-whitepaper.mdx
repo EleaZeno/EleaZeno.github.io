@@ -12,6 +12,10 @@ primary:
   url: https://bitcoin.org/bitcoin.pdf
   outlet: bitcoin.org
 primaryChecksum: "sha256:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553"
+primaryChecksumNote: >-
+  校验和实测自 cdn.nakamotoinstitute.org 的 bitcoin.pdf 副本（184,292 字节，9 页，
+  PDF 内嵌创建时间 2009-03-24）。抽取时 bitcoin.org 从本机不可达，因此"该副本与
+  bitcoin.org 所发布字节完全相同"这一点未经本站实测。
 sources:
   - title: "Bitcoin whitepaper (HTML 转录本)"
     url: https://nakamotoinstitute.org/library/bitcoin/
@@ -304,7 +308,7 @@ import Check from '../../components/Check.astro';
 
 出块奖励在原文里只有这一句，而且**通篇没有出现 reward 这个词**，也没有 coinbase。它是 "a special transaction"。
 
-> The incentive may also be funded with transaction fees.  If the output value of a transaction is less than its input value, the difference is a transaction fee that is added to the incentive value of the block containing the transaction.
+> The incentive can also be funded with transaction fees.  If the output value of a transaction is less than its input value, the difference is a transaction fee that is added to the incentive value of the block containing the transaction.
 
 手续费的定义很干净：输入减输出的差额。
 
@@ -664,10 +668,14 @@ q=0.45   z=340
 
 ## 12. Conclusion：中本聪自己的总结
 
-> We started with the framework of coins made from digital signatures, which provides strong control of ownership, but is incomplete without a way to prevent double-spending.  To solve this, we proposed a peer-to-peer network using proof-of-work to record a public history of transactions that quickly becomes computationally impractical for an attacker to change if honest nodes control a majority of CPU power.
+> We have proposed a system for electronic transactions without relying on trust.  We started with the usual framework of coins made from digital signatures, which provides strong control of ownership, but is incomplete without a way to prevent double-spending.  To solve this, we proposed a peer-to-peer network using proof-of-work to record a public history of transactions that quickly becomes computationally impractical for an attacker to change if honest nodes control a majority of CPU power.
 
 <Sidenote kind="caution">
 <em>computationally impractical</em>——计算上不可行，不是"不可能"。白皮书从未声称信息论意义上的安全。历史是可以被改的，只是代价随深度指数上升。
+</Sidenote>
+
+<Sidenote kind="term">
+注意 <em>the usual framework</em> 里的 <em>usual</em>。中本聪把"用数字签名链表示币的所有权"称为<strong>惯常</strong>框架，即他自己并不主张这部分是原创——[1] Wei Dai 的 b-money 已在此列。他主张的原创是后半句：用 proof-of-work 记录公开历史来解决双花。流行叙事常把整套设计都归给这篇论文，原文自己划的边界比那要窄。
 </Sidenote>
 
 > The network is robust in its unstructured simplicity.  Nodes work all at once with little coordination.  They do not need to be identified, since messages are not routed to any particular place and only need to be delivered on a best effort basis.
