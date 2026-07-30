@@ -37,6 +37,25 @@ const posts = defineCollection({
      * not same-day reporting.
      */
     retro: z.boolean().default(false),
+    /**
+     * Published errata. Append-only: a wrong claim is never silently
+     * edited out of the body, because the trail of having been wrong is
+     * itself the evidence that these gates work. Rendered at the top of
+     * the post so a reader cannot consume the error without the fix.
+     */
+    corrections: z
+      .array(
+        z.object({
+          date: z.coerce.date(),
+          /** Verbatim quote of what the post originally claimed. */
+          was: z.string().min(1),
+          /** What the evidence actually supports. */
+          now: z.string().min(1),
+          /** How the error was caught, so the mechanism is auditable. */
+          why: z.string().optional(),
+        }),
+      )
+      .default([]),
     /** Rotation bookkeeping. */
     topic: z.string().optional(),
     generatedBy: z.string().optional(),

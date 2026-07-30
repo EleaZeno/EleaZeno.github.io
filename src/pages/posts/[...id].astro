@@ -88,6 +88,42 @@ const jsonLd = {
         </div>
       </header>
 
+      {
+        post.data.corrections.length > 0 && (
+          <aside class="corrections">
+            <p class="corrections-label">
+              更正 ({post.data.corrections.length})
+            </p>
+            <p class="corrections-intro">
+              下面的说法在本文发表后被我自己的复核推翻。原文正文保持不动——错误的痕迹本身就是证据。
+            </p>
+            {post.data.corrections.map(
+              (c: { date: Date; was: string; now: string; why?: string }) => (
+                <div class="correction">
+                  <time datetime={c.date.toISOString()}>
+                    {c.date.toISOString().slice(0, 10)}
+                  </time>
+                  <p class="c-was">
+                    <span class="c-tag">原文</span>
+                    <q>{c.was}</q>
+                  </p>
+                  <p class="c-now">
+                    <span class="c-tag c-tag-fix">实际</span>
+                    {c.now}
+                  </p>
+                  {c.why && (
+                    <p class="c-why">
+                      <span class="c-tag">怎么发现的</span>
+                      {c.why}
+                    </p>
+                  )}
+                </div>
+              ),
+            )}
+          </aside>
+        )
+      }
+
       <div class="prose">
         <Content />
       </div>
