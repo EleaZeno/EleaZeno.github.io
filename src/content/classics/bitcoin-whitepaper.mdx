@@ -1,0 +1,754 @@
+---
+title: 比特币白皮书逐节拆解
+originalTitle: "Bitcoin: A Peer-to-Peer Electronic Cash System"
+author: Satoshi Nakamoto
+originalYear: 2008
+description: 九页纸如何在不设裁判的前提下让互不信任的陌生人就"谁付了钱"达成一致。逐节对照原文，标出它真正说了什么、以及流行转述里那些它其实没说的话。
+pubDate: 2026-07-31
+field: crypto
+tags: [比特币, 共识, 密码学, 分布式系统]
+primary:
+  title: "Bitcoin: A Peer-to-Peer Electronic Cash System (PDF)"
+  url: https://bitcoin.org/bitcoin.pdf
+  outlet: bitcoin.org
+primaryChecksum: "sha256:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553"
+sources:
+  - title: "Bitcoin whitepaper (HTML 转录本)"
+    url: https://nakamotoinstitute.org/library/bitcoin/
+    outlet: Satoshi Nakamoto Institute
+  - title: "Hashcash - a denial of service counter-measure"
+    url: http://www.hashcash.org/papers/hashcash.pdf
+    outlet: Adam Back, 2002
+  - title: "b-money"
+    url: http://www.weidai.com/bmoney.txt
+    outlet: Wei Dai, 1998
+prerequisites:
+  - hash-function
+  - public-key-cryptography
+  - digital-signature
+  - double-spending
+  - merkle-tree
+  - proof-of-work
+difficulty:
+  audience: 高中数学基础即可读完前十节；第十一节的概率推导需要一点微积分或统计学直觉，但结论部分不需要
+  minutes: 55
+  hardParts:
+    - 第十一节的泊松分布求和：为什么要"1 减去追平概率"而不是直接加总，这一步是全文唯一绕的地方
+    - 赌徒破产问题给出的 (q/p)^z，其闭式解本身要用递推或鞅论才能推出，原文直接引用了 Feller 而没有证明
+    - >-
+      "最长链"与"累积工作量最大的链"在原文里被当作同义词，这个隐含假设在难度可变的现实中并不成立
+reading:
+  - title: 精通比特币（Mastering Bitcoin，第 3 版）
+    author: Andreas M. Antonopoulos, David A. Harding
+    note: 白皮书只给机制骨架，这本给出真实字段、脚本和交易结构。想知道"80 字节区块头"具体装了什么就看它
+    url: https://github.com/bitcoinbook/bitcoinbook
+    level: intro
+  - title: Hashcash - a denial of service counter-measure
+    author: Adam Back
+    note: 白皮书第四节的工作量证明直接引自这篇。八页，读完就明白"前导零"这个设计不是中本聪首创
+    url: http://www.hashcash.org/papers/hashcash.pdf
+    level: core
+  - title: An Introduction to Probability Theory and Its Applications, Vol. 1
+    author: William Feller
+    note: 白皮书唯一的数学参考文献。第十四章讲随机游走与赌徒破产，(q/p)^z 的来处就在那里
+    level: deep
+  - title: Bitcoin and Cryptocurrency Technologies
+    author: Arvind Narayanan 等
+    note: 普林斯顿的公开课教材，把白皮书省略的部分（激励博弈、匿名性攻击、真实网络行为）补成了完整课程
+    url: https://bitcoinbook.cs.princeton.edu/
+    level: core
+take: |
+  这篇论文最反直觉的地方，是它**没有解决**大多数人以为它解决了的问题。
+
+  它没有定义货币总量，没有规定十分钟出块，没有说过"51%"，甚至没有出现 blockchain 这个词。
+  九页里真正被证明的只有一件事：如果诚实节点掌握多数算力，那么攻击者追平落后 z 个区块的概率
+  随 z 指数下降。其余全是工程草图。
+
+  我认为这恰恰是它成功的原因。它把**唯一无法靠代码迭代修补的东西**——在无身份、无裁判、
+  可自由进出的网络里给事件排序——单独拎出来解决掉，其他一切留给实现。后来那些"白皮书没说清楚"
+  的抱怨，多半误解了它的体裁：这不是规范文档，是一份存在性证明。
+
+  也正因如此，读它最大的收获不是学会比特币怎么运作，而是看到一个人如何把一个看似需要
+  中心权威的问题，重写成一个纯粹的概率不等式。
+generatedBy: Hermes agent 逐字核对 PDF 原件
+---
+
+import Sidenote from '../../components/Sidenote.astro';
+import Prereq from '../../components/Prereq.astro';
+import Check from '../../components/Check.astro';
+
+## 读之前：这篇论文的体裁
+
+九页，八条参考文献，一段 C 代码，三张表。没有致谢，没有机构，没有版本号，正文里**连日期都没有**。
+
+先说三件容易被忽略的事实，它们决定了该怎么读这篇东西。
+
+**它不是规范文档。** 论文没给出任何协议参数：难度调整只写"targeting an average number of blocks per hour"而不给数字，货币总量只写"a predetermined number of coins"而不给数字。想照着它实现比特币是不可能的。
+
+**它只严格证明了一件事。** 第十一节那个概率不等式是全文唯一有数学的部分。其余十一节是工程草图和设计论证。
+
+**我们手上这份是 2009 年 3 月的修订版。** PDF 内嵌的创建时间是 <code>D:20090324113315-06'00'</code>，生成工具是 OpenOffice.org 2.4。流传甚广的"2008 年 10 月 31 日"是邮件列表首发日，不在论文本体里。
+
+<Sidenote kind="why">
+我核对的是 sha256 为 <code>b1674191…f4f553</code> 的那份 PDF，页首元数据里没有 <code>/Title</code> 也没有 <code>/Author</code> 字段——标题和作者名只作为正文第一页的排版文字存在。
+</Sidenote>
+
+<Prereq of={["hash-function", "public-key-cryptography", "digital-signature", "double-spending"]} />
+
+---
+
+## 摘要：把问题压缩成一句话
+
+原文摘要不长，值得整段读，因为全文的论证结构在这里已经完整出现了。
+
+> A purely peer-to-peer version of electronic cash would allow online payments to be sent directly from one party to another without going through a financial institution.  Digital signatures provide part of the solution, but the main benefits are lost if a trusted third party is still required to prevent double-spending.
+
+这两句是全文的**问题陈述**，而且陈述得极精确：数字签名解决了一部分，但不是全部。
+
+签名能证明"我授权了这笔转账"，却证明不了"我没有把同一笔钱授权给另一个人"。因为签名是**可以重复使用的**——同一份签名数据提交两次，两次都验证通过。要判断哪一次在先，你需要一个所有人都认可的时间顺序。而"所有人都认可的顺序"传统上只能由一个中心机构给出。
+
+<Sidenote kind="caution">
+注意原文说的是 <em>the main benefits are lost</em>，不是"数字签名没用"。中本聪的判断是：如果仍需可信第三方防双花，那么去中介化带来的好处就被抵消了——这是一个成本论证，不是技术否定。
+</Sidenote>
+
+> The network timestamps transactions by hashing them into an ongoing chain of hash-based proof-of-work, forming a record that cannot be changed without redoing the proof-of-work.  The longest chain not only serves as proof of the sequence of events witnessed, but proof that it came from the largest pool of CPU power.
+
+这是**解法陈述**。拆开看有四个动作叠在一起：给交易打时间戳、把它们哈希进一条链、这条链由工作量证明构成、于是修改历史等于重做工作量。
+
+最后半句是整个设计的枢轴：最长的链**同时**是两件事的证明——事件顺序的证明，以及"它来自最大算力池"的证明。把"谁说的对"这个社会问题，换成了"谁算得多"这个物理问题。
+
+<Check q="为什么数字签名本身不足以防止双花？">
+因为签名证明的是授权，不是**顺序**。同一笔钱可以被合法签名给两个不同的收款人，两份签名都能通过验证。缺的是一个所有人公认的"哪笔在先"的判定，而这需要全局时间顺序——签名机制不提供这个。
+</Check>
+
+---
+
+## 1. Introduction：为什么"可撤销"本身是一种成本
+
+这一节全是经济论证，没有技术内容。它要回答的是"现有支付系统到底哪里不好"。
+
+> What is needed is an electronic payment system based on cryptographic proof instead of trust, allowing any two willing parties to transact directly with each other without the need for a trusted third party.
+
+中本聪列的现有体系的病症，顺序很有讲究：交易不可完全不可逆（因为要留争议调解空间）→ 调解成本推高最低交易额 → 小额支付变得不可能 → 商家必须索取超出必要的客户信息 → 欺诈率被当作不可避免的成本吸收。
+
+<Sidenote kind="why">
+这条因果链的落点是"micropayments 做不了"。也就是说，白皮书的动机不是意识形态，而是一个具体的市场空缺：低于某个金额的在线支付在旧体系里结构性地不成立。
+</Sidenote>
+
+> The system is secure as long as honest nodes collectively control more CPU power than any cooperating group of attacker nodes.
+
+这句话请逐字记住，因为它是后面所有"51%"误传的源头。原文说的是"诚实节点集体控制的算力超过任何**相互协作的**攻击者群体"。它既没有出现数字 51，也没有把 50% 说成阈值。差别在第十一节会变得很实际。
+
+<Check q="白皮书认为传统支付系统的根本缺陷是什么？（提示：不是'手续费高'）">
+是**可逆性**。因为交易可撤销，就必须有争议调解；调解产生成本，成本设定了最低可行交易额；于是小额支付在结构上不可能。手续费只是这个因果链的表现，不是原因。
+</Check>
+
+---
+
+## 2. Transactions：币不是余额，是一条签名链
+
+> We define an electronic coin as a chain of digital signatures.  Each owner transfers the coin to the next by digitally signing a hash of the previous transaction and the public key of the next owner and adding these to the end of the coin.
+
+这是全文最容易被现代读者误读的一句，因为今天大家的直觉是"账户里有余额"。白皮书里**没有账户，没有余额**。一枚币就是一条不断加长的签名链，每一环签的是两样东西：**上一笔交易的哈希**（把自己钉在历史上）和**下一任所有者的公钥**（指定往哪去）。
+
+<Sidenote kind="term">
+原文图示里的字段是 <code>Owner N's Public Key</code>、<code>Hash</code>、<code>Owner N-1's Signature</code>，箭头标注 <code>Verify</code> 和 <code>Sign</code>。整篇论文没有出现 "address"（比特币地址）这个概念——收款方直接用公钥标识。
+</Sidenote>
+
+签上"上一笔交易的哈希"这个动作做了一件事：任何人拿到这枚币，可以一路往回验签，确认所有权转移每一步都被正确授权。
+
+**但验不出双花。** 中本聪紧接着点出这一点，然后给了一句我认为是全文最凝练的话：
+
+> The only way to confirm the absence of a transaction is to be aware of all transactions.
+
+要确认某笔交易**不存在**，唯一办法是知道所有交易。这句话直接决定了比特币必须是全网广播的——不是设计偏好，是逻辑必然。你没法在只看到局部的情况下证明否命题。
+
+<Sidenote kind="caution">
+这也顺手解释了为什么比特币不可能既保持这套安全模型又做到"只让相关方看到交易"。全局可见性是双花检测的前提。第 10 节讲隐私时，中本聪的处理办法不是隐藏交易，而是让公钥匿名。
+</Sidenote>
+
+于是"防双花"的需求被翻译成了"就交易的先后顺序取得多数共识"：
+
+> The payee needs proof that at the time of each transaction, the majority of nodes agreed it was the first received.
+
+**这一节假设你已经懂的东西：** 数字签名的签/验语义、公钥与私钥、哈希作为指针、mint（造币厂）和中心权威的角色、银行如何靠账本防双花、"公开宣告"作为不可抵赖手段。
+
+<Check q="为什么白皮书的设计必须把所有交易向全网广播？">
+因为要确认一笔交易**不存在**（即没有发生过在先的双花），唯一办法是掌握全部交易。否命题无法从局部信息证明。全局广播不是性能取舍，是这个安全定义的逻辑前提。
+</Check>
+
+---
+
+## 3. Timestamp Server：把报纸公示搬到网络上
+
+> A timestamp server works by taking a hash of a block of items to be timestamped and widely publishing the hash, such as in a newspaper or Usenet post [2-5].
+
+时间戳服务器不是中本聪的发明——他引了四篇文献（Haber & Stornetta 那一系列，1991–1997）。原始想法很朴素：把一批文件的哈希登在报纸上。报纸的公开性和不可回溯修改性，让你事后无法伪造"这份文件在那天已经存在"。
+
+<Sidenote kind="why">
+选 <em>newspaper or Usenet post</em> 作例子的用意是强调"广泛公示"这个属性本身就能提供不可抵赖性——不需要公示渠道值得信任，只需要它足够公开、足够多人同时看到。
+</Sidenote>
+
+中本聪加的一步是把时间戳串起来：
+
+> Each timestamp includes the previous timestamp in its hash, forming a chain, with each additional timestamp reinforcing the ones before it.
+
+每个时间戳把前一个包含进自己的哈希里。于是链条越往后长，前面的部分越难改——改第 n 个就必须重算 n 之后的全部。这个"后来者加固先前者"的性质，是整条链安全性的来源。
+
+<Sidenote kind="term">
+这一节的 <em>block</em> 指的还只是"一批待打时间戳的条目"，不是后来意义上的比特币区块。区块的完整含义要到第 4、5 节才成形。
+</Sidenote>
+
+**这一节假设你已经懂的东西：** 哈希的单向性与抗碰撞、链式哈希、公示作为信任替代品、Usenet、篡改可检测性（tamper-evidence）。
+
+<Check q="'每个时间戳包含前一个'这个设计买到了什么？">
+历史的**累积加固**。要修改链上第 n 个时间戳，必须连带重算它之后的每一个，因为每一个都把前者的哈希封在了自己里面。链越长，早期部分越不可动。
+</Check>
+
+---
+
+## 4. Proof-of-Work：把投票权绑到物理成本上
+
+这一节是整个系统的引擎。
+
+> The proof-of-work involves scanning for a value that when hashed, such as with SHA-256, the hash begins with a number of zero bits.  The average work required is exponential in the number of zero bits required and can be verified by executing a single hash.
+
+请注意 **such as with SHA-256**——这是举例语气。原文没有把 SHA-256 定为规范，而且 SHA-256 在九页里只出现这一次。
+
+机制本身是 Adam Back 的 Hashcash（引文 [6]）：不断改一个计数器重算哈希，直到结果开头有足够多的零位。
+
+<Sidenote kind="math">
+"前导零" = 哈希值必须小于某个目标数。要求 k 个零位，平均需要试 2^k 次。工作量随 k <strong>指数上升</strong>，但验证永远只要算<strong>一次</strong>哈希。这个不对称性是全部安全性的技术来源。
+</Sidenote>
+
+> Once the CPU effort has been expended to make it satisfy the proof-of-work, the block cannot be changed without redoing the work.  As later blocks are chained after it, the work to change the block would include redoing all the blocks after it.
+
+沉没成本变成了防御。修改一个区块 = 重做它以及它之后所有区块的工作量。
+
+接下来是这一节最重要的一句，它解决的是一个完全不同的问题——**投票权分配**：
+
+> If the majority were based on one-IP-address-one-vote, it could be subverted by anyone able to allocate many IPs.  Proof-of-work is essentially one-CPU-one-vote.
+
+<Sidenote kind="why">
+这就是女巫攻击（Sybil attack）的解法，尽管原文没用这个词。任何"一个身份一票"的方案在开放网络里都会崩塌，因为身份可以免费批量制造。工作量证明把投票权绑到<strong>无法免费复制的东西</strong>——算力——上面。这是全文最深的一个设计洞察。
+</Sidenote>
+
+> The majority decision is represented by the longest chain, which has the greatest proof-of-work effort invested in it.
+
+<Sidenote kind="caution">
+中本聪把"最长的链"和"投入工作量最大的链"当成同义词。在难度恒定时它们确实等价，但难度可变之后就不再等价了——真实的比特币实现按<strong>累积难度</strong>而非区块个数选链。这是白皮书的一个隐含假设，不是笔误，而是当时尚未浮现的区分。
+</Sidenote>
+
+难度调整只有一句，而且**不含任何数字**：
+
+> To compensate for increasing hardware speed and varying interest in running nodes over time, the proof-of-work difficulty is determined by a moving average targeting an average number of blocks per hour.  If they're generated too fast, the difficulty increases.
+
+"2016 个区块""每两周"这些参数都不在论文里。原文甚至只写了难度**上调**的方向，没写下调。
+
+**这一节假设你已经懂的东西：** 工作量证明、Hashcash、SHA-256、前导零与目标值、暴力搜索、nonce（本节首次出现）、指数期望工作量与 O(1) 验证的不对称、区块链接（`Prev Hash` 字段）、沉没成本、女巫攻击与 IP 批量分配、投票代表权、最长链规则、累积工作量、难度、滑动平均、硬件速度增长。
+
+<Check q="为什么'一个 IP 一票'不可行，而'一个 CPU 一票'可行？">
+因为 IP 地址可以近乎免费地大量获取，投票权就成了资源分配能力的函数，攻击者可以凭空制造多数。算力不能凭空制造——每一票都对应真实的电力和硬件支出。工作量证明把投票权锚定在一个**外部稀缺资源**上。
+</Check>
+
+<Check q="原文给出的出块目标间隔是多少？">
+**没有给。** 第 4 节只说难度由滑动平均调整，目标是"每小时若干个区块"（an average number of blocks per hour），不含数字。"10 分钟"这个数只在第 7 节作为估算磁盘占用的**假设条件**出现一次。
+</Check>
+
+---
+
+## 5. Network：六步，全网协议就这么长
+
+整个网络协议在原文里是六个编号步骤，一字不多。这是全文唯一的算法级枚举，值得逐条对照：
+
+> 1) New transactions are broadcast to all nodes.
+> 2) Each node collects new transactions into a block.
+> 3) Each node works on finding a difficult proof-of-work for its block.
+> 4) When a node finds a proof-of-work, it broadcasts the block to all nodes.
+> 5) Nodes accept the block only if all transactions in it are valid and not already spent.
+> 6) Nodes express their acceptance of the block by working on creating the next block in the chain, using the hash of the accepted block as the previous hash.
+
+第 6 步是精巧之处：**接受一个区块的表达方式，就是开始在它后面干活**。没有投票消息，没有确认协议，没有签名表态。"同意"这个动作和"生产"这个动作是同一个动作。
+
+<Sidenote kind="why">
+这是为什么比特币不需要节点之间协商。在传统共识算法里，达成一致需要多轮消息交换（提议、投票、提交）。这里的一致性是<strong>副产品</strong>：所有人都想在最长链上挖，因为挖在短链上等于白干。
+</Sidenote>
+
+> Nodes always consider the longest chain to be the correct one and will keep working on extending it.
+
+分叉的处理只有两句话：
+
+> If two nodes broadcast different versions of the next block simultaneously, some nodes may receive one or the other first.  In that case, they work on the first one they received, but save the other branch in case it becomes longer.  The tie will be broken when the next proof-of-work is found and one branch becomes longer; the nodes that were working on the other branch will then switch to the longer one.
+
+<Sidenote kind="caution">
+原文全篇<strong>没有出现 fork 这个词</strong>，用的是 <em>branch</em>。也没有"重组"（reorganization）的说法，只描述了"切换到更长的那条"这个行为。
+</Sidenote>
+
+网络假设放得极松：
+
+> New transaction broadcasts do not necessarily need to reach all nodes.  As long as they reach many nodes, they will get into a block before long.  Block broadcasts are also tolerant of dropped messages.
+
+消息可以丢，节点可以随时离线再回来——回来时只要接受最长链就自动补上了缺失的历史。这就是摘要里那句 "accepting the longest proof-of-work chain as proof of what happened while they were gone" 的兑现。
+
+**这一节假设你已经懂的东西：** 广播/gossip 传播、交易池（隐含，未命名）、区块组装、有效性校验、"未被花费"检查（即 UTXO 语义，未命名）、竞争分支、平局打破、链重组、best-effort 投递与丢包容忍、节点补块、网络分区。
+
+<Check q="节点如何向网络表达'我接受这个区块'？">
+通过**开始在它后面挖下一个区块**，把它的哈希填入新区块的 prev hash 字段。没有独立的投票或确认消息——接受和生产是同一个动作，这让协议不需要任何协商轮次。
+</Check>
+
+---
+
+## 6. Incentive：这一节和你以为的不一样
+
+> By convention, the first transaction in a block is a special transaction that starts a new coin owned by the creator of the block.
+
+出块奖励在原文里只有这一句，而且**通篇没有出现 reward 这个词**，也没有 coinbase。它是 "a special transaction"。
+
+> The incentive may also be funded with transaction fees.  If the output value of a transaction is less than its input value, the difference is a transaction fee that is added to the incentive value of the block containing the transaction.
+
+手续费的定义很干净：输入减输出的差额。
+
+现在是关键部分。请仔细读这两句，它们放在一起讲了一件被广泛误传的事：
+
+> The steady addition of a constant of amount of new coins is analogous to gold miners expending resources to add gold to circulation.  In our case, it is CPU time and electricity that is expended.
+
+<Sidenote kind="caution">
+原文这里有个语法错误：<em>a constant of amount of new coins</em>（多了个 of）。我保留原样。但更重要的是它说的是"<strong>恒定速率</strong>增发"——这与后来实际实现的每四年减半在语义上是<strong>相反</strong>的。减半计划不在白皮书里。
+</Sidenote>
+
+> Once a predetermined number of coins have entered circulation, the incentive can transition entirely to transaction fees and be completely inflation free.
+
+**这是全文唯一提到总量上限的地方，而且没有数字。** 没有 21,000,000，没有 21 million。这个数字来自代码，不来自论文。
+
+这一节结尾是一个博弈论论证，说明为什么掌握多数算力的攻击者仍会选择诚实：
+
+> He ought to find it more profitable to play by the rules, such rules that favour him with more new coins than everyone else combined, than to undermine the system and the validity of his own wealth.
+
+攻击者如果有能力重写历史，他同时也有能力合法赚取最多的新币；而攻击会摧毁他自己持有资产的价值。这是"利益相关"式的安全论证——不是密码学保证，是经济激励对齐。
+
+**这一节假设你已经懂的东西：** 铸币税、货币发行与流通、黄金开采类比、CPU 时间与电力成本、交易输入输出与差额、手续费、通胀、货币总量上限（概念上，无数值）、激励相容、理性攻击者、持币者的自我惩罚机制。
+
+<Check q="白皮书规定的比特币总量是多少？减半周期是多久？">
+**都没有规定。** 第 6 节只写"once a predetermined number of coins have entered circulation"，不给数值；而它对增发的描述是 "the steady addition of a constant of amount of new coins"——恒定速率，与减半相反。2100 万和四年减半都来自实现代码，不在论文中。
+</Check>
+
+---
+
+## 7. Reclaiming Disk Space：Merkle 树在这里才出场
+
+> To facilitate this without breaking the block's hash, transactions are hashed in a Merkle Tree [7][2][5], with only the root included in the block's hash.  Old blocks can then be compacted by stubbing off branches of the tree.  The interior hashes do not need to be stored.
+
+Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证（那是下一节的事）。逻辑是：交易被埋得足够深之后内容可以丢弃，但区块头的哈希不能变——把交易组织成 Merkle 树，只把根放进区块头，就可以剪掉树枝而不动根。
+
+<Sidenote kind="term">
+原文图题逐字为 <code>Transactions Hashed in a Merkle Tree</code> 与 <code>After Pruning Tx0-2 from the Block</code>。这是全文<strong>唯一带图题</strong>的一组图，其余六张图都没有标题。
+</Sidenote>
+
+<Sidenote kind="caution">
+常见转述说"剪枝后只需保留 2 个哈希"。原文<strong>没有这个说法</strong>：图中剪掉 Tx0-2 之后保留的是 <code>Hash01</code>、<code>Hash2</code>、<code>Hash3</code> 加 Tx3，正文只写 <em>The interior hashes do not need to be stored</em>。"2 hashes" 属于二手概括。
+</Sidenote>
+
+然后是全文唯一的一串完整算术：
+
+> A block header with no transactions would be about 80 bytes.  If we suppose blocks are generated every 10 minutes, 80 bytes * 6 * 24 * 365 = 4.2MB per year.  With computer systems typically selling with 2GB of RAM as of 2008, and Moore's Law predicting current growth of 1.2GB per year, storage should not be a problem even if the block headers must be kept in memory.
+
+<Sidenote kind="math">
+拆开：80 字节 × 每小时 6 块 × 每天 24 小时 × 每年 365 天 = 4.2 MB/年。那个 <strong>6</strong> 就是"10 分钟出一块"的唯一来处——它是这个估算的<strong>假设输入</strong>，不是协议规定。
+</Sidenote>
+
+<Sidenote kind="why">
+"1.2GB per year" 是中本聪对摩尔定律的解读方式：不是算力翻倍，而是同价位机器的内存<strong>年增量</strong>。他的论证是 4.2MB/年 远小于 1.2GB/年，所以即便把全部区块头常驻内存也不成问题。这个判断到今天仍然成立。
+</Sidenote>
+
+**这一节假设你已经懂的东西：** 磁盘成本、确认深度（"buried under enough blocks"）、已花费交易的可丢弃性、Merkle 树（根、内部哈希、剪枝）、区块头与区块体的分离、80 字节头部的构成（未逐字段说明）、字节/MB/GB、RAM、摩尔定律。
+
+<Check q="白皮书里 Merkle 树的首要用途是什么？">
+**回收磁盘空间**（第 7 节标题就是 Reclaiming Disk Space）。因为只有根进入区块头哈希，旧交易可以被剪掉而不破坏区块头。轻钱包验证是第 8 节的用途，是同一结构的第二个红利。
+</Check>
+
+---
+
+## 8. Simplified Payment Verification：轻钱包的全部理论
+
+> It is possible to verify payments without running a full network node.  A user only needs to keep a copy of the block headers of the longest proof-of-work chain, which he can get by querying network nodes until he's convinced he has the longest chain, and obtain the Merkle branch linking the transaction to the block it's timestamped in.
+
+<Sidenote kind="term">
+"SPV" 这个缩写<strong>不在原文里</strong>，只有第 8 节标题的全称 Simplified Payment Verification。今天普遍使用的缩写是后人的简化。
+</Sidenote>
+
+轻客户端拿两样东西：区块头链，以及一条把自己那笔交易连到某个区块的 Merkle 路径。它验证不了交易本身有效，但能验证"全网确实把它打包进了最长链"，然后靠后续区块累积的工作量来提升信心。
+
+原文很坦白地说出了这个模式的弱点：
+
+> As such, the verification is reliable as long as honest nodes control the network, but is more vulnerable if the network is overpowered by an attacker.
+
+补救办法也只有一句：
+
+> One strategy to protect against this would be to accept alerts from network nodes when they detect an invalid block, prompting the user's software to download the full block and alerted transactions to confirm the inconsistency.
+
+<Sidenote kind="caution">
+注意这是 <em>one strategy would be</em>——一个建议，不是设计。这句话是后来比特币 alert 机制的思想来源，但论文没有说明谁有权发警报、如何防止伪造警报。这是白皮书公认的留白之一。
+</Sidenote>
+
+对高频收款的商家，中本聪的建议是自己跑全节点：
+
+> Businesses that receive frequent payments will probably still want to run their own nodes for more independent security and quicker verification.
+
+**这一节假设你已经懂的东西：** 全节点与轻客户端的区别、区块头链、Merkle 路径/包含性证明、向多个对等节点查询以确定最长链（隐含日食攻击风险，未命名）、确认数与概率安全、伪造交易、警报机制、独立验证的权衡。
+
+<Check q="轻客户端能验证什么，不能验证什么？">
+能验证：某笔交易被打包进了最长工作量证明链的某个区块（靠 Merkle 路径 + 区块头）。**不能**验证：那笔交易本身是否合法、输入是否已被花费。它把有效性判断外包给了"多数算力是诚实的"这个假设。
+</Check>
+
+---
+
+## 9. Combining and Splitting Value：为什么不怕历史爆炸
+
+> To allow value to be split and combined, transactions contain multiple inputs and outputs.
+
+一笔交易可以有多个输入、多个输出。原文补了一句关于结构的量化断言：
+
+> Normally there will be either a single input from a larger previous transaction or multiple inputs combining smaller amounts, and at most two outputs: one for the payment, and one returning the change, if any, back to the sender.
+
+<Sidenote kind="term">
+"至多两个输出"——付款 + 找零。这是全文关于交易结构的唯一数量断言。也请注意原文说的是 <em>every cent</em>，<strong>没有</strong>出现 satoshi 这个单位（它是后人以中本聪命名的）。
+</Sidenote>
+
+然后是这一节的要点，回应一个真实的担忧：
+
+> It should be noted that fan-out, where a transaction depends on several transactions, and those transactions depend on many more, is not a problem here.  There is never the need to extract a complete standalone copy of a transaction's history.
+
+如果每笔交易依赖多笔前序交易，而那些又各自依赖更多，历史会呈组合式膨胀。中本聪说这不成问题——因为**从来不需要抽出一笔交易的完整独立历史**。你不靠追溯来源来相信一笔钱，你靠它在最长链里的位置。
+
+<Sidenote kind="why">
+这句话是前面几节的兑现：时间戳链已经承担了"这笔钱是真的"的举证责任，所以不需要沿着交易图往回走。这是比特币和"每张钞票带着完整流通记录"这类设计的分野。
+</Sidenote>
+
+**这一节假设你已经懂的东西：** 可分性与最小单位、交易输入/输出、找零输出、多输入聚合、交易图/依赖 DAG、fan-out 的组合爆炸。
+
+<Check q="为什么交易依赖的 fan-out 不会导致数据爆炸？">
+因为验证一笔钱不需要它的完整来源历史。时间戳链已经证明了这笔交易被全网接受，所以不必沿依赖图回溯。原文：*There is never the need to extract a complete standalone copy of a transaction's history.*
+</Check>
+
+---
+
+## 10. Privacy：论文承诺的隐私比你以为的少
+
+> The necessity to announce all transactions publicly precludes this method, but privacy can still be maintained by breaking the flow of information in another place: by keeping public keys anonymous.
+
+传统金融隐私靠访问控制（只有银行和当事人看得见）。比特币不能用这条路——第 2 节已经论证过全局广播是必需的。于是隐私被移到另一个断点：**公钥不与身份绑定**。
+
+> The public can see that someone is sending an amount to someone else, but without information linking the transaction to anyone.  This is similar to the level of information released by stock exchanges, where the time and size of individual trades, the "tape", is made public, but without telling who the parties were.
+
+<Sidenote kind="why">
+证券交易所的 "tape" 这个类比定得很准：成交时间和规模全公开，对手方不公开。这正是比特币能提供的隐私上限——不是隐身，是<strong>去身份化的完全透明</strong>。
+</Sidenote>
+
+> As an additional firewall, a new key pair should be used for each transaction to keep them from being linked to a common owner.
+
+然后中本聪自己指出了这道防线的漏洞：
+
+> The risk is that if the owner of a key is revealed, linking could reveal other transactions that belonged to the same owner.
+
+> Some linking is still unavoidable with multi-input transactions, which necessarily reveal that their inputs were owned by the same owner.
+
+<Sidenote kind="caution">
+多输入交易必然暴露这些输入属于同一人——这是链上聚类分析（clustering）的地基，也是今天所有链上追踪公司的主要抓手。白皮书明确承认了它，从未承诺匿名。
+</Sidenote>
+
+值得注意的是原文用的词是 <em>anonymous</em>（形容 public key），而不是 pseudonymous。但它描述的机制、以及它自己承认的关联风险，实质上就是假名性。
+
+**这一节假设你已经懂的东西：** 银行式隐私与访问控制、公开广播与隐私的固有张力、假名性、证券交易所的 tape、密钥复用与地址复用、多输入交易的共同所有权泄漏、去匿名化的链式扩散（taint/clustering，未命名）。
+
+<Check q="白皮书承诺的隐私水平是什么？">
+**假名性，不是匿名。** 公钥与身份不绑定，可见性类似交易所的 tape（时间和金额公开、对手方不公开）。原文明确承认两个漏洞：密钥所有者一旦暴露会牵连其他交易；多输入交易必然泄露这些输入同属一人。
+</Check>
+
+---
+
+## 11. Calculations：全文唯一的数学
+
+这一节是白皮书的心脏。前十节是工程草图，只有这里有严格结论。
+
+<Sidenote kind="why">
+我认为这一节的存在是白皮书能说服人的真正原因。它没有说"攻击很难"，而是给出了一个可以代入数字算出来的<strong>概率上界</strong>，并附上 C 代码让人自己跑。
+</Sidenote>
+
+### 第一步：把攻防写成随机游走
+
+> The race between the honest chain and an attacker chain can be characterized as a Binomial Random Walk.  The success event is the honest chain being extended by one block, increasing its lead by +1, and the failure event is the attacker's chain being extended by one block, reducing the gap by -1.
+
+诚实链领先的区块数是一个整数，每出一个块它 +1 或 -1。就这么简单。
+
+<Sidenote kind="term">
+<strong>二项随机游走</strong>：每一步以概率 p 前进、概率 q 后退的整数轨迹。这里 p 和 q 就是双方各自找到下一个区块的概率，而找到区块的概率正比于算力占比。
+</Sidenote>
+
+### 第二步：赌徒破产问题给出闭式解
+
+> The probability of an attacker catching up from a given deficit is analogous to a Gambler's Ruin problem.  Suppose a gambler with unlimited credit starts at a deficit and plays potentially an infinite number of trials to try to reach breakeven.  We can calculate the probability he ever reaches breakeven, or that an attacker ever catches up with the honest chain, as follows: [8]
+
+三个记号：
+
+```
+p  = probability an honest node finds the next block
+q  = probability the attacker finds the next block
+qz = probability the attacker will ever catch up from z blocks behind
+```
+
+结论：
+
+$$
+q_z = \begin{cases}
+1 & \text{if } p \le q \\[4pt]
+(q/p)^z & \text{if } p > q
+\end{cases}
+$$
+
+<Sidenote kind="math">
+上半支是坏消息：如果攻击者算力不低于诚实方（p ≤ q），追平概率是 <strong>1</strong>——不是"很可能"，是必然，只要他愿意一直等。这就是多数算力假设不可放弃的原因。
+</Sidenote>
+
+<Sidenote kind="caution">
+"无限信用的赌徒"这个设定意味着攻击者可以无限次尝试、永不放弃。所以这个上界是<strong>非常保守</strong>的——它算的是"永远有一天能追上"的概率，不是"在合理时间内追上"。
+</Sidenote>
+
+> Given our assumption that p > q, the probability drops exponentially as the number of blocks the attacker has to catch up with increases.  With the odds against him, if he doesn't make a lucky lunge forward early on, his chances become vanishingly small as he falls further behind.
+
+### 第三步：收款方不知道攻击者已经挖了多少
+
+前面假设了攻击者落后 z 个块。但收款方看到 z 个确认时，并不知道攻击者在这段时间秘密挖出了几个。中本聪用泊松分布处理这个未知量：
+
+> He doesn't know the exact amount of progress the attacker has made, but assuming the honest blocks took the average expected time per block, the attacker's potential progress will be a Poisson distribution with expected value:
+
+$$
+\lambda = z \frac{q}{p}
+$$
+
+<Sidenote kind="math">
+直觉：诚实方花了出 z 个块的时间，攻击者以 q/p 的相对速率在挖，所以他期望挖出 z·(q/p) 个。泊松分布刻画的是"在给定时间窗口内发生若干次独立事件"的次数分布，正好匹配区块到达过程。
+</Sidenote>
+
+<Sidenote kind="caution">
+流行转述常把这个式子叫 "Attacker Potential Progress 公式"，好像它是论文里的一个术语。原文<strong>没有</strong>这个名词，只是一句普通的句子后面跟一个行内公式。
+</Sidenote>
+
+然后对攻击者可能的进度求全概率：
+
+> To get the probability the attacker could still catch up now, we multiply the Poisson density for each amount of progress he could have made by the probability he could catch up from that point:
+
+$$
+\sum_{k=0}^{\infty} \frac{\lambda^k e^{-\lambda}}{k!} \cdot
+\begin{cases}
+(q/p)^{(z-k)} & \text{if } k \le z \\[4pt]
+1 & \text{if } k > z
+\end{cases}
+$$
+
+<Sidenote kind="math">
+读法：对攻击者已挖出 k 个块的每种可能（泊松密度），乘上"从落后 z−k 处追平"的概率。若 k > z 他已经追上了，那一项概率为 1。
+</Sidenote>
+
+最后一步是纯技巧——把无穷尾部换成有限求和：
+
+> Rearranging to avoid summing the infinite tail of the distribution...
+
+$$
+1 - \sum_{k=0}^{z} \frac{\lambda^k e^{-\lambda}}{k!}\left(1 - (q/p)^{(z-k)}\right)
+$$
+
+<Sidenote kind="why">
+为什么要重排：k > z 的那些项概率都是 1，直接加要算无穷多项。改成"1 减去攻击者<strong>失败</strong>的概率"，求和就只需跑 k = 0…z，可以真正在计算机上算。这是全节唯一需要动点脑筋的地方，纯粹为了可计算性。
+</Sidenote>
+
+### 第四步：代码和数字
+
+原文直接给了 C 代码：
+
+```c
+#include <math.h>
+double AttackerSuccessProbability(double q, int z)
+{
+    double p = 1.0 - q;
+    double lambda = z * (q / p);
+    double sum = 1.0;
+    int i, k;
+    for (k = 0; k <= z; k++)
+    {
+        double poisson = exp(-lambda);
+        for (i = 1; i <= k; i++)
+            poisson *= lambda / i;
+        sum -= poisson * (1 - pow(q / p, z - k));
+    }
+    return sum;
+}
+```
+
+<Sidenote kind="term">
+<code>p = 1.0 - q</code> 这一行透露了模型的一个简化：世界上只有诚实方和攻击者两方，算力占比之和为 1。没有第三方、没有掉线、没有网络延迟。
+</Sidenote>
+
+攻击者掌握 10% 算力时：
+
+```
+q=0.1
+z=0    P=1.0000000
+z=1    P=0.2045873
+z=2    P=0.0509779
+z=3    P=0.0131722
+z=4    P=0.0034552
+z=5    P=0.0009137
+z=6    P=0.0002428
+z=7    P=0.0000647
+z=8    P=0.0000173
+z=9    P=0.0000046
+z=10   P=0.0000012
+```
+
+掌握 30% 算力时（注意步长变成 5）：
+
+```
+q=0.3
+z=0    P=1.0000000
+z=5    P=0.1773523
+z=10   P=0.0416605
+z=15   P=0.0101008
+z=20   P=0.0024804
+z=25   P=0.0006132
+z=30   P=0.0001522
+z=35   P=0.0000379
+z=40   P=0.0000095
+z=45   P=0.0000024
+z=50   P=0.0000006
+```
+
+反过来解：要把成功概率压到 0.1% 以下需要几个确认？
+
+> Solving for P less than 0.1%...
+
+```
+P < 0.001
+q=0.10   z=5
+q=0.15   z=8
+q=0.20   z=11
+q=0.25   z=15
+q=0.30   z=24
+q=0.35   z=41
+q=0.40   z=89
+q=0.45   z=340
+```
+
+<Sidenote kind="caution">
+最后一行是全文对"51% 攻击"叙事最有力的反驳：攻击者只有 <strong>45%</strong> 算力时，成功概率仍然不可忽略，需要 <strong>340 个确认</strong>才降到 0.1% 以下。安全性是随 z 指数衰减的<strong>连续</strong>函数，不是 50% 处的开关。
+</Sidenote>
+
+<Sidenote kind="why">
+也请注意 <code>z=0</code> 时 P = 1.0000000：零确认交易的双花成功概率是 <strong>100%</strong>。这个数字就摆在论文的表格第一行。
+</Sidenote>
+
+这一节还藏着一个实践建议，讲的是收款方该如何防范预先挖好的攻击链：
+
+> The receiver generates a new key pair and gives the public key to the sender shortly before signing.  This prevents the sender from preparing a chain of blocks ahead of time by working on it continuously until he is lucky enough to get far enough ahead, then executing the transaction at that moment.
+
+**这一节假设你已经懂的东西：** 二项随机游走、赌徒破产（无限信用、回本、无限次试验）、泊松分布与密度 λ^k e^(−λ)/k!、期望值 λ、无穷级数重排、条件概率与全概率公式、指数衰减、p/q/z 记号、p = 1−q 的归一化、泊松近似的前提、C 语言与 `math.h`、浮点精度、攻击者秘密并行挖链、临时密钥对。
+
+<Check q="攻击者掌握 45% 算力时，需要多少确认才能把双花成功率压到 0.1% 以下？这说明了什么？">
+**340 个确认。** 说明安全性不存在 50% 的硬阈值——低于半数算力的攻击者依然有实质成功概率，只是需要收款方等待更久。"51% 攻击"是通俗叙事，论文给的是一条连续的概率曲线。
+</Check>
+
+<Check q="为什么要把无穷求和重排成 1 减去有限求和？">
+因为 k > z 的所有项追平概率都是 1，直接加需要求无穷多项，无法在计算机上算。改成"1 − 攻击者失败的概率"后，求和范围收缩到 k = 0…z，成为有限步计算。纯粹是可计算性技巧，不改变结果。
+</Check>
+
+---
+
+## 12. Conclusion：中本聪自己的总结
+
+> We started with the framework of coins made from digital signatures, which provides strong control of ownership, but is incomplete without a way to prevent double-spending.  To solve this, we proposed a peer-to-peer network using proof-of-work to record a public history of transactions that quickly becomes computationally impractical for an attacker to change if honest nodes control a majority of CPU power.
+
+<Sidenote kind="caution">
+<em>computationally impractical</em>——计算上不可行，不是"不可能"。白皮书从未声称信息论意义上的安全。历史是可以被改的，只是代价随深度指数上升。
+</Sidenote>
+
+> The network is robust in its unstructured simplicity.  Nodes work all at once with little coordination.  They do not need to be identified, since messages are not routed to any particular place and only need to be delivered on a best effort basis.
+
+"无结构的简单性"是中本聪对自己设计的评价，我认为这是他最自豪的一句。节点不需要身份，因为消息不需要路由到特定地点——这个性质让网络可以任意进出而无需注册、无需成员管理。
+
+> Nodes can leave and rejoin the network at will, accepting the proof-of-work chain as proof of what happened while they were gone.  They vote with their CPU power, expressing their acceptance of valid blocks by working on extending them and rejecting invalid blocks by refusing to work on them.  Any needed rules and incentives can be enforced with this consensus mechanism.
+
+<Sidenote kind="term">
+<em>consensus mechanism</em> 这个今天满天飞的词，在整篇白皮书里<strong>只出现这一次</strong>，就在最后一句。
+</Sidenote>
+
+最后一句话的野心值得注意："任何需要的规则和激励都可以用这个共识机制来强制执行"——他知道自己造的不只是一个支付系统，而是一台可以执行任意规则的机器。
+
+<Check q="原文对安全性的表述是'不可能被修改'还是别的？">
+是 **computationally impractical**（计算上不可行），且附带前提"if honest nodes control a majority of CPU power"。这是成本论证，不是密码学不可能性。第 11 节的表格给出的正是这个成本的量化形式。
+</Check>
+
+---
+
+## References：八条，一条数学
+
+原文的参考文献不带编号章节标题，独占第九页。
+
+```
+[1] W. Dai, "b-money," http://www.weidai.com/bmoney.txt, 1998.
+
+[2] H. Massias, X.S. Avila, and J.-J. Quisquater, "Design of a secure timestamping service with minimal
+    trust requirements," In 20th Symposium on Information Theory in the Benelux, May 1999.
+
+[3] S. Haber, W.S. Stornetta, "How to time-stamp a digital document," In Journal of Cryptology, vol 3, no
+    2, pages 99-111, 1991.
+
+[4] D. Bayer, S. Haber, W.S. Stornetta, "Improving the efficiency and reliability of digital time-stamping,"
+    In Sequences II: Methods in Communication, Security and Computer Science, pages 329-334, 1993.
+
+[5] S. Haber, W.S. Stornetta, "Secure names for bit-strings," In Proceedings of the 4th ACM Conference
+    on Computer and Communications Security, pages 28-35, April 1997.
+
+[6] A. Back, "Hashcash - a denial of service counter-measure,"
+    http://www.hashcash.org/papers/hashcash.pdf, 2002.
+
+[7] R.C. Merkle, "Protocols for public key cryptosystems," In Proc. 1980 Symposium on Security and
+    Privacy, IEEE Computer Society, pages 122-133, April 1980.
+
+[8] W. Feller, "An introduction to probability theory and its applications," 1957.
+```
+
+引用分布本身有信息量：[2]–[5] 四条全是时间戳文献，[6] 是工作量证明，[7] 是 Merkle 树，[8] 是概率论。也就是说白皮书的技术零件**全部是现成的**，中本聪的贡献是组装方式。
+
+<Sidenote kind="why">
+唯一的前置数字货币引用是 [1] Wei Dai 的 b-money，一个纯 URL、无同行评审的文本。DigiCash、Bit Gold、Chaum 的工作都<strong>没有</strong>被引用。
+</Sidenote>
+
+---
+
+## 附：论文没说，但常被说成它说了的
+
+这一节是逐字检索的结果。我在 PDF 全文里搜过每一个词。
+
+| 流行说法 | 原文实况 |
+| --- | --- |
+| 提出了"51% 攻击" | 字符串 `51` 出现 **0** 次。原文条件是 `p > q` 与 "a majority of CPU power"。而 `q=0.45 z=340` 那一行说明 50% 不是阈值 |
+| 用了 blockchain 这个词 | `blockchain` 0 次，分写的 `block chain` 也 0 次。只有 `chain`、`the longest chain`、`chain of blocks` |
+| 规定总量 2100 万 | `21 million` / `21,000,000` 均 0 次。只有 "a predetermined number of coins" |
+| 规定奖励每四年减半 | `halv*` 0 次、`reward` 0 次。第 6 节反而说 "the steady addition of a constant of amount of new coins" |
+| 规定 10 分钟出块 | `10 minutes` 出现 1 次，在第 7 节，且是假设句 "If we suppose blocks are generated every 10 minutes"。第 4 节讲难度只说 "an average number of blocks per hour"，不含数字 |
+| 规定 2016 块 / 两周调整难度 | `2016`、`two weeks` 均 0 次 |
+| 规定 1MB 区块上限 | 全文唯一的 MB 是 `4.2MB`。没有任何区块大小上限 |
+| 剪枝后只需 2 个哈希 | 原文只说 "The interior hashes do not need to be stored"。图中剪掉 Tx0-2 后保留 3 个哈希 + Tx3 |
+| 用了 SPV 这个缩写 | `SPV` 0 次，只有标题的全称 |
+| 提到 ECDSA / 椭圆曲线 | 均 0 次。只有泛称 digital signatures；SHA-256 也只是 "such as with SHA-256" 的举例 |
+| 用了 decentralized / trustless / ledger / wallet | 逐一核查：`decentral*` 0、`trustless` 0、`ledger` 0、`wallet` 0、`Byzantine` 0、`fork` 0、`coinbase` 0、`genesis` 0、`UTXO` 0、`cryptocurrency` 0、`smart contract` 0 |
+| 把节点叫 miner | `mining`/`miner` 各 1 次，且**只**出现在黄金类比 "analogous to gold miners expending resources"。论文从不称节点为矿工 |
+| 说了"累积工作量最大的链" | 原文说 the longest chain，并解释为 "which has the greatest proof-of-work effort invested in it"，把两者当同义。难度可变后二者不再等价——这是论文的隐含缺口 |
+| 承诺匿名 | 用词是 "keeping public keys anonymous"，同时明确承认 "Some linking is still unavoidable with multi-input transactions"。是有限假名性，不是匿名承诺 |
+
+<Sidenote kind="caution">
+另外三个排版事实，读原文时会撞见：第 6 节有语法错误 <em>a constant of amount of</em>；第 7 节引用顺序是 <code>[7][2][5]</code> 非升序；同一个字段在第 7 节叫 <code>Root Hash</code>、第 8 节叫 <code>Merkle Root</code>。
+</Sidenote>
+
+<Check q="'比特币白皮书发明了区块链'这句话错在哪？">
+两处。一，`blockchain` 这个词（连分写形式）在九页原文里一次都没出现。二，链式哈希时间戳是 Haber 和 Stornetta 1991 年的工作，白皮书第 3 节明确引用了 [2]–[5]。中本聪的贡献是把时间戳链、工作量证明、点对点广播和经济激励**组装**成一个能在开放网络里自洽运行的系统。
+</Check>

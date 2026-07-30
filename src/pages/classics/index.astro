@@ -1,0 +1,63 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { formatDate } from '../../lib/posts';
+import { url } from '../../lib/url';
+
+const isProd = import.meta.env.PROD;
+const all = await getCollection('classics', ({ data }) => !(isProd && data.draft));
+const entries = all.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const FIELD_LABELS: Record<string, string> = {
+  crypto: '密码学与分布式',
+  philosophy: '哲学',
+  mathematics: '数学',
+  physics: '物理',
+  computing: '计算',
+  economics: '经济',
+  other: '其他',
+};
+---
+
+<Base
+  title="经典"
+  description="把经典原文拆开重讲：分节对照、边注解释、前置知识补齐、读完能自测。"
+  section="classics"
+>
+  <header class="page">
+    <p class="kicker">经典拆解</p>
+    <h1>经典</h1>
+    <p class="standfirst">
+      我们挑改变过一个领域的原始文献，逐节拆开重讲。不是摘要，也不是普通译文：
+      原文的每一步论证都配上「它在说什么」「为什么这么写」「容易读错在哪」，
+      术语放在页边随读随看，每节末尾一道自测题。前置知识尽量做成站内词条——
+      理想状态是读这个网站不需要先去别处补课。
+    </p>
+  </header>
+
+  {
+    entries.length === 0 ? (
+      <p class="empty">还没有拆解。</p>
+    ) : (
+      <ul class="classic-list">
+        {entries.map((e) => (
+          <li>
+            <p class="classic-meta">
+              <time datetime={e.data.pubDate.toISOString()}>{formatDate(e.data.pubDate)}</time>
+              <span class="sep">/</span>
+              <span>{FIELD_LABELS[e.data.field] ?? e.data.field}</span>
+              <span class="sep">/</span>
+              <span>{e.data.difficulty.minutes} 分钟</span>
+            </p>
+            <h2><a href={url('classics/' + e.id)}>{e.data.title}</a></h2>
+            <p class="classic-original">
+              {e.data.originalTitle} · {e.data.author}（{e.data.originalYear}）
+            </p>
+            <p class="classic-desc">{e.data.description}</p>
+            <p class="classic-audience">适合：{e.data.difficulty.audience}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>

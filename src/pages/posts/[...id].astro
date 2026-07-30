@@ -73,6 +73,12 @@ const jsonLd = {
           <span>{mins} 分钟</span>
           <span class="sep">/</span>
           <span>{CONFIDENCE[post.data.confidence]}</span>
+          {post.data.retro && (
+            <>
+              <span class="sep">/</span>
+              <span class="retro-tag">回顾</span>
+            </>
+          )}
           {post.data.generatedBy && (
             <>
               <span class="sep">/</span>

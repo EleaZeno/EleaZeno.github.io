@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import glob, json, os, re, sys
 D='src/content/concepts/'
-A='src/content/posts/'
+# Every collection whose prose may cite a concept. Classics deconstructions
+# lean on the wiki harder than posts do (they declare prerequisites), so
+# leaving them out here made the orphan check blind to real usage.
+ARTICLE_DIRS=('src/content/posts/','src/content/classics/','src/content/dreams/')
 
 def fm(t):
     if not t.startswith('---'):
@@ -34,8 +37,10 @@ def main():
         ids[i]=d
         body[i]=b
     posts={}
-    for p in sorted(glob.glob(A+'*.md')):
-        posts[os.path.basename(p)[:-3]]=open(p,encoding='utf-8').read()
+    for A in ARTICLE_DIRS:
+        # .mdx too: classics embed components, so they are authored as MDX.
+        for p in sorted(glob.glob(A+'*.md'))+sorted(glob.glob(A+'*.mdx')):
+            posts[p]=open(p,encoding='utf-8').read()
     prob={}
     for i,d in ids.items():
         errs=[]
@@ -55,8 +60,11 @@ def main():
         names=[d.get('title','').strip().strip('"')]
         names+=d.get('aliases_inline',[])
         cited=any(any(n and n in t for n in names) for t in posts.values())
+        # Being listed under a classic's `prerequisites:` is explicit usage
+        # even when the concept's display name never appears in the prose.
+        declared=any(i in t for t in posts.values())
         linked=any(i in (o.get('related_inline') or []) for j,o in ids.items() if j!=i)
-        if not cited and not linked:
+        if not cited and not linked and not declared:
             errs.append('orphan: no article mentions it and no concept links to it')
         if errs:
             prob[i]=errs

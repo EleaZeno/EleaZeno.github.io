@@ -106,6 +106,8 @@ def build_frontmatter(meta: dict) -> str:
         lines.append(f"generatedBy: {q(meta['generated_by'])}")
     if meta.get("draft"):
         lines.append("draft: true")
+    if meta.get("retro"):
+        lines.append("retro: true")
     if meta.get("take"):
         # Block scalar keeps markdown (lists, links, blank lines) intact
         # without needing to escape anything.
@@ -140,6 +142,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--slug")
     ap.add_argument("--generated-by", default="")
     ap.add_argument("--draft", action="store_true")
+    ap.add_argument("--retro", action="store_true",
+                    help="backfilled piece about an earlier event")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args(argv)
 
@@ -195,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
         "sources": deduped,
         "generated_by": args.generated_by,
         "draft": args.draft,
+        "retro": args.retro,
     }
 
     POSTS.mkdir(parents=True, exist_ok=True)

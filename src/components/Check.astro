@@ -1,0 +1,29 @@
+---
+/*
+ * An inline retrieval check: a question at the point of exposure, with the
+ * answer hidden behind a native <details> toggle.
+ *
+ * This is the one mechanism with the strongest evidence behind it. The Rust
+ * Book (quiz editions) and Andy Matuschak's mnemonic medium both found that
+ * comprehension improves when the reader is asked to *retrieve* immediately
+ * after reading a passage -- not at the end of the chapter, where the failure
+ * is already unrecoverable.
+ *
+ * Deliberately no JS and no scoring: <details> is keyboard accessible, works
+ * without hydration, and prints open. The goal is honest self-testing, not
+ * gamification.
+ */
+interface Props {
+  /** The question. Keep it answerable from the section just read. */
+  q: string;
+}
+const { q } = Astro.props as Props;
+---
+
+<details class="check">
+  <summary>
+    <span class="check-tag">自测</span>
+    <span class="check-q">{q}</span>
+  </summary>
+  <div class="check-a"><slot /></div>
+</details>

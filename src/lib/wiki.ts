@@ -71,10 +71,16 @@ export async function backlinksFor(
   }
   return out;
 }
-/** Reader-facing labels for the depth marker on each concept. */
+/**
+ * Reader-facing labels for the depth marker on each concept.
+ *
+ * Keys must match the `level` enum in content.config.ts. They previously read
+ * primer/working/deep while the schema allowed intro/core/deep, so intro and
+ * core concepts rendered a blank label.
+ */
 export const LEVEL_LABELS: Record<string, string> = {
-  primer: '入门',
-  working: '实用',
+  intro: '入门',
+  core: '核心',
   deep: '深入',
 };
 

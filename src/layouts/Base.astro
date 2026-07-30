@@ -11,7 +11,7 @@ interface Props {
   description?: string;
   type?: 'website' | 'article';
   /** Marks the active nav item. */
-  section?: 'home' | 'concepts' | 'archive' | 'dreams' | 'about';
+  section?: 'home' | 'classics' | 'concepts' | 'archive' | 'dreams' | 'about';
 }
 
 const { title, description = SITE.description, type = 'website', section = 'home' } = Astro.props;
@@ -22,6 +22,7 @@ const feedHref = new URL(url('rss.xml'), Astro.site);
 
 const nav = [
   { key: 'home', label: 'index', href: url('') },
+  { key: 'classics', label: 'classics', href: url('classics') },
   { key: 'concepts', label: 'concepts', href: url('concepts') },
   { key: 'archive', label: 'archive', href: url('archive') },
   { key: 'dreams', label: 'dreams', href: url('dreams') },

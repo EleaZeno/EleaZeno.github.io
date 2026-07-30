@@ -1,0 +1,39 @@
+---
+/*
+ * A margin note, authored inline beside the sentence it explains.
+ *
+ * Why a component rather than a markdown footnote: a footnote sends the reader
+ * to the bottom of the page and back, which is exactly the context switch that
+ * loses a beginner. A sidenote sits in the reader's peripheral vision at the
+ * moment of confusion, so the explanation costs no navigation.
+ *
+ * Positioning is pure CSS (float into the reserved margin, see global.css).
+ * Under ~76rem the same markup re-flows into an inline block, so nothing is
+ * lost on a phone.
+ */
+interface Props {
+  /*
+   * term    - defines a word or symbol just used
+   * why     - explains the author's motive, not the literal content
+   * caution - a place readers reliably misread the original
+   * math    - unpacks one step of a formula
+   */
+  kind?: 'term' | 'why' | 'caution' | 'math';
+  /** Overrides the default label; keep it to a couple of words. */
+  label?: string;
+}
+
+const { kind = 'term', label } = Astro.props as Props;
+
+const DEFAULT_LABELS: Record<string, string> = {
+  term: '术语',
+  why: '为何这么写',
+  caution: '容易读错',
+  math: '拆开算',
+};
+---
+
+<aside class="sidenote" data-kind={kind}>
+  <span class="sidenote-label">{label ?? DEFAULT_LABELS[kind]}</span>
+  <slot />
+</aside>

@@ -1,0 +1,53 @@
+---
+/*
+ * Prerequisite gate shown before a hard section.
+ *
+ * Arbital's post-mortem is the design input here: a hand-maintained
+ * prerequisite graph collapses under author burden. So a section declares only
+ * concept slugs, and this component resolves them against the concepts
+ * collection at build time. If a slug has no page yet, it renders as plain
+ * text rather than a dead link -- an honest gap, and a build-visible TODO.
+ *
+ * The long-term aim is that every prerequisite resolves on-site, so a reader is
+ * never told to go read something we do not host.
+ */
+import { getCollection } from 'astro:content';
+import { url } from '../lib/url';
+
+interface Props {
+  /** Concept slugs, in the order a reader should meet them. */
+  of: string[];
+  /** Optional heading override. */
+  label?: string;
+}
+const { of, label = '读这一节前，你需要' } = Astro.props as Props;
+
+const concepts = await getCollection('concepts');
+const byId = new Map(concepts.map((c) => [c.id, c]));
+
+const items = of.map((id) => {
+  const c = byId.get(id);
+  return {
+    id,
+    title: c?.data.title ?? id,
+    oneLiner: c?.data.oneLiner ?? null,
+    href: c ? url(`concepts/${id}`) : null,
+  };
+});
+---
+
+{
+  items.length > 0 && (
+    <aside class="prereq" aria-label="前置知识">
+      <p class="prereq-label">{label}</p>
+      <ul>
+        {items.map((it) => (
+          <li>
+            {it.href ? <a href={it.href}>{it.title}</a> : <span>{it.title}</span>}
+            {it.oneLiner && <span class="prereq-hint">{it.oneLiner}</span>}
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}

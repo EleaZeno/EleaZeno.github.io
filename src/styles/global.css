@@ -336,15 +336,101 @@ a:hover {
 
 /* ---------- article: two-column grid ---------- */
 
+/*
+ * Reading layout: rail | measure | margin.
+ *
+ * The prose column stays at --measure because that is the readable line
+ * length; widening it to fill the shell would only hurt reading. The leftover
+ * horizontal space on the right becomes a margin reserved for sidenotes,
+ * which is also the substrate the annotated-classics section is built on.
+ *
+ * Only two grid columns are declared. The margin is not a grid column:
+ * sidenotes float out of the prose column into the padding to its right, so
+ * the browser keeps each note beside its own paragraph with no JS measuring.
+ *
+ * `justify-content: center` is deliberately absent -- the columns are sized to
+ * consume the shell, so centering would reintroduce the dead gutters that made
+ * the old layout look empty on the right.
+ */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, var(--measure)) var(--rail);
-  gap: 4rem;
-  justify-content: center;
+  grid-template-columns: var(--rail) minmax(0, calc(var(--measure) + var(--margin-gap) + var(--margin)));
+  column-gap: var(--zone-gap);
   padding-top: 2.5rem;
 }
 
-.article { min-width: 0; }
+.article {
+  min-width: 0;
+  grid-column: 2;
+}
+
+/* The rail sits left of the text so the eye meets contents before prose. */
+.layout > .rail-stack {
+  grid-column: 1;
+  grid-row: 1;
+  text-align: right;
+}
+
+.layout > .rail-stack .rail ol,
+.layout > .rail-stack .rail ul { text-align: right; }
+
+/*
+ * Sidenotes (Tufte-style), pure CSS, no JS.
+ *
+ * A sidenote is authored inline, immediately after the sentence it annotates,
+ * and floats into the reserved margin. Floating (rather than absolute
+ * positioning) is what keeps a note beside its own paragraph automatically:
+ * the browser places it in document order and later notes stack below earlier
+ * ones instead of overlapping.
+ *
+ * The prose column reserves the space by padding its right edge, so a floated
+ * note pulled out by that same amount lands cleanly outside the text.
+ */
+.prose,
+.classic-body {
+  padding-right: calc(var(--margin) + var(--margin-gap));
+}
+
+.sidenote {
+  float: right;
+  clear: right;
+  width: var(--margin);
+  margin-right: calc(-1 * (var(--margin) + var(--margin-gap)));
+  margin-bottom: 1.1rem;
+  font-family: var(--sans);
+  font-size: 0.775rem;
+  line-height: 1.55;
+  color: var(--fg-dim);
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 0.5rem;
+  /* Notes are reference material: never stretch them to justify. */
+  text-align: left;
+}
+
+/* Sidenotes must not inherit the prose flow spacing. */
+.prose > .sidenote { margin-top: 0.35rem; }
+
+.sidenote > * + * { margin-top: 0.55rem; }
+.sidenote p { margin: 0; }
+
+.sidenote-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 0.3rem;
+}
+
+/* Kind-specific accents: the reader should tell note types apart at a glance. */
+.sidenote[data-kind='term'] { border-top-color: var(--accent-deep); }
+.sidenote[data-kind='why'] { border-top-color: var(--ok); }
+.sidenote[data-kind='why'] .sidenote-label { color: var(--ok); }
+.sidenote[data-kind='caution'] { border-top-color: var(--warn); }
+.sidenote[data-kind='caution'] .sidenote-label { color: var(--warn); }
+.sidenote[data-kind='math'] { border-top-color: var(--fg-faint); }
+.sidenote[data-kind='math'] .sidenote-label { color: var(--fg-faint); }
 
 .article-head {
   padding-bottom: 1.6rem;
@@ -746,11 +832,55 @@ ul.plain li {
 
 /* ---------- responsive ---------- */
 
+/*
+ * Below ~76rem the margin is too narrow to hold a readable note, so sidenotes
+ * stop floating and become inline blocks in the text flow instead. The prose
+ * column drops its reserved right padding at the same time.
+ */
+@media (max-width: 76rem) {
+  .layout {
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+  }
+
+  .prose,
+  .classic-body { padding-right: 0; }
+
+  .sidenote {
+    float: none;
+    clear: none;
+    width: auto;
+    margin-right: 0;
+    margin-left: 0;
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    border-top: 2px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .prose > .sidenote { margin-top: 1.1rem; }
+
+  .sidenote[data-kind='term'] { border-top-color: var(--accent-deep); }
+  .sidenote[data-kind='why'] { border-top-color: var(--ok); }
+  .sidenote[data-kind='caution'] { border-top-color: var(--warn); }
+}
+
 @media (max-width: 62rem) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
   }
+
+  .article { grid-column: 1; }
+
+  .layout > .rail-stack {
+    grid-column: 1;
+    grid-row: auto;
+    text-align: left;
+  }
+
+  .layout > .rail-stack .rail ol,
+  .layout > .rail-stack .rail ul { text-align: left; }
 
   .rail-stack {
     position: static;
@@ -910,4 +1040,341 @@ ul.plain li {
 
 @media (width <= 48rem) {
   .glossary-item { grid-template-columns: 1fr; gap: 0.3rem; }
+}
+
+/* Retro marker: this piece was written after the fact. */
+.retro-tag {
+  color: var(--accent-deep);
+  border-bottom: 1px dotted var(--border);
+}
+
+/* ---------- classics: annotated primary texts ---------- */
+
+/*
+ * The header block that establishes provenance. A deconstruction is only
+ * trustworthy if the reader can see exactly which artifact we read, so the
+ * original title, author, year and checksum sit above the fold.
+ */
+.original {
+  display: grid;
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.82rem;
+}
+
+.original > div {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.original dt {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  padding-top: 0.15rem;
+}
+
+.original dd { margin: 0; color: var(--fg-dim); }
+.original .checksum { font-size: 0.66rem; word-break: break-all; color: var(--fg-faint); }
+
+/*
+ * The "how to read this" gate. Placed before the body deliberately: telling a
+ * reader up front what will be hard, and what they need first, is what lets
+ * them decide to go learn it instead of quietly bouncing at section 4.
+ */
+.gate {
+  margin: 2.25rem 0;
+  padding: 1.25rem 1.4rem;
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent-deep);
+  border-radius: 3px;
+}
+
+.gate h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+}
+
+.gate-line {
+  margin: 0 0 0.6rem;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--fg-dim);
+}
+
+.gate-sublabel {
+  margin: 1rem 0 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.gate-hard ul,
+.gate-prereq ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: var(--fg-dim);
+}
+
+.gate-hard li,
+.gate-prereq li { margin-bottom: 0.3rem; }
+
+/* A prerequisite we have not written yet: shown, but visibly not a link. */
+.gate-prereq .missing {
+  color: var(--fg-faint);
+  border-bottom: 1px dotted var(--fg-faint);
+}
+
+.prereq-hint {
+  color: var(--fg-faint);
+  font-size: 0.78rem;
+}
+
+.prereq-hint::before { content: ' — '; }
+
+/* Prerequisite gate used mid-article, before a hard section. */
+.prereq {
+  margin: 2rem 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+
+.prereq-label {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+.prereq ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: var(--fg-dim);
+}
+
+/*
+ * Retrieval check. Collapsed by default so the reader is forced to attempt an
+ * answer before seeing ours -- that attempt is the part that does the work.
+ */
+.check {
+  margin: 1.75rem 0;
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--ok);
+  border-radius: 3px;
+  background: var(--bg-sunk);
+}
+
+.check > summary {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.check > summary::-webkit-details-marker { display: none; }
+
+.check > summary::after {
+  content: '▸';
+  margin-left: auto;
+  color: var(--fg-faint);
+  font-size: 0.7rem;
+}
+
+.check[open] > summary::after { content: '▾'; }
+
+.check-tag {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ok);
+}
+
+.check-q {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.check-a {
+  padding: 0 1rem 0.9rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--fg-dim);
+  border-top: 1px dashed var(--rule);
+  padding-top: 0.8rem;
+  margin: 0 0 0;
+}
+
+.check-a > :first-child { margin-top: 0; }
+.check-a > :last-child { margin-bottom: 0; }
+
+/* ---------- reading list ---------- */
+
+.reading { margin-top: 3rem; }
+
+.reading-intro {
+  font-size: 0.85rem;
+  color: var(--fg-dim);
+  margin-bottom: 1rem;
+}
+
+.reading ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: reading;
+}
+
+.reading li {
+  counter-increment: reading;
+  padding: 0.75rem 0 0.75rem 2.2rem;
+  border-top: 1px solid var(--rule);
+  position: relative;
+}
+
+.reading li::before {
+  content: counter(reading, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--fg-faint);
+}
+
+.reading-head {
+  margin: 0 0 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.reading-title { font-weight: 500; }
+
+.reading-author {
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+}
+
+.reading .lvl {
+  font-size: 0.63rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.reading-note {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.65;
+  color: var(--fg-dim);
+}
+
+/* ---------- classics index ---------- */
+
+.classic-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.classic-list > li {
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.classic-meta {
+  margin: 0 0 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: var(--fg-faint);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.classic-list h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.classic-original {
+  margin: 0 0 0.5rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.86rem;
+  color: var(--fg-dim);
+}
+
+.classic-desc {
+  margin: 0 0 0.4rem;
+  color: var(--fg-dim);
+  line-height: 1.7;
+}
+
+.classic-audience {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+}
+
+/*
+ * Section headings inside a deconstruction carry the original section number,
+ * so the reader can always map our text back onto the source.
+ */
+.classic-body h2 {
+  margin-top: 3.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+}
+
+/* The original passage being discussed, set apart from our explanation. */
+.classic-body blockquote {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  color: var(--fg-dim);
+  border-left: 2px solid var(--rule-strong);
+  background: var(--bg-sunk);
+  padding: 0.8rem 1.1rem;
+  margin: 1.5rem 0;
+}
+
+.classic-body blockquote p { margin: 0 0 0.6rem; }
+.classic-body blockquote p:last-child { margin-bottom: 0; }
+
+/* Section-opening one-line thesis. */
+.classic-body .thesis {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--fg);
+  background: var(--accent-wash);
+  border-left: 2px solid var(--accent-deep);
+  padding: 0.7rem 1rem;
+  margin: 1.25rem 0 1.5rem;
 }

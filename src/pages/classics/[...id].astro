@@ -1,0 +1,228 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { getCollection, render } from 'astro:content';
+import { marked } from 'marked';
+import Base from '../../layouts/Base.astro';
+import Toc from '../../components/Toc.astro';
+import Stamp from '../../components/Stamp.astro';
+import { formatDate } from '../../lib/posts';
+import { url, hostOf } from '../../lib/url';
+
+export const getStaticPaths = async () => {
+  const isProd = import.meta.env.PROD;
+  const all = await getCollection('classics', ({ data }) => !(isProd && data.draft));
+  const sorted = all.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  return sorted.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+};
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { entry } = Astro.props as Props;
+const { Content, headings } = await render(entry);
+const d = entry.data;
+
+const takeHtml = d.take ? await marked.parse(d.take) : '';
+
+// Resolve declared prerequisites against the wiki so the header can show which
+// gaps we actually cover on-site and which are still external.
+const concepts = await getCollection('concepts');
+const byId = new Map(concepts.map((c) => [c.id, c]));
+const prereqs = d.prerequisites.map((id: string) => {
+  const c = byId.get(id);
+  return {
+    id,
+    title: c?.data.title ?? id,
+    oneLiner: c?.data.oneLiner ?? null,
+    href: c ? url(`concepts/${id}`) : null,
+  };
+});
+const covered = prereqs.filter((p) => p.href).length;
+
+/*
+ * Hard build constraint, not a soft warning.
+ *
+ * The goal for this section is that every prerequisite a classic assumes is
+ * itself explained on-site in the same annotated form. A dangling prerequisite
+ * silently degrades to plain text, which is exactly the failure that would
+ * accumulate unnoticed, so a missing concept fails the build instead.
+ */
+const dangling = prereqs.filter((p) => !p.href).map((p) => p.id);
+if (dangling.length > 0) {
+  throw new Error(
+    `classics/${entry.id}: prerequisites reference concepts that do not exist: ` +
+      `${dangling.join(', ')}. Write src/content/concepts/<id>.md first, ` +
+      `or drop the id from frontmatter.`,
+  );
+}
+
+const LEVEL_LABELS: Record<string, string> = {
+  intro: '入门',
+  core: '进阶',
+  deep: '深入',
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  crypto: '密码学与分布式',
+  philosophy: '哲学',
+  mathematics: '数学',
+  physics: '物理',
+  computing: '计算',
+  economics: '经济',
+  other: '其他',
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ScholarlyArticle',
+  headline: d.title,
+  description: d.description,
+  datePublished: d.pubDate.toISOString(),
+  ...(d.updatedDate ? { dateModified: d.updatedDate.toISOString() } : {}),
+  author: { '@type': 'Organization', name: 'Elea Notes' },
+  about: { '@type': 'CreativeWork', name: d.originalTitle, author: d.author },
+  citation: [d.primary, ...d.sources].map((s: { title: string; url: string }) => ({
+    '@type': 'CreativeWork',
+    name: s.title,
+    url: s.url,
+  })),
+};
+---
+
+<Base title={d.title} description={d.description} type="article" section="classics">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+  <div class="layout">
+    <article class="article">
+      <header class="article-head">
+        <p class="kicker">经典拆解</p>
+        <h1>{d.title}</h1>
+        <p class="standfirst">{d.description}</p>
+        <div class="byline">
+          <time datetime={d.pubDate.toISOString()}>{formatDate(d.pubDate)}</time>
+          <span class="sep">/</span>
+          <span>{FIELD_LABELS[d.field] ?? d.field}</span>
+          <span class="sep">/</span>
+          <span>{d.difficulty.minutes} 分钟</span>
+          {d.generatedBy && (
+            <>
+              <span class="sep">/</span>
+              <span>{d.generatedBy}</span>
+            </>
+          )}
+        </div>
+
+        <dl class="original">
+          <div>
+            <dt>原文</dt>
+            <dd>
+              <a href={d.primary.url} rel="nofollow noopener" target="_blank">{d.originalTitle}</a>
+            </dd>
+          </div>
+          <div>
+            <dt>作者</dt>
+            <dd>{d.author}（{d.originalYear}）</dd>
+          </div>
+          {d.primaryChecksum && (
+            <div>
+              <dt>校验</dt>
+              <dd class="mono checksum">{d.primaryChecksum}</dd>
+            </div>
+          )}
+        </dl>
+      </header>
+
+      <section class="gate">
+        <h2 id="怎么读">怎么读这篇</h2>
+        <p class="gate-line">
+          这篇按<strong>原文分节</strong>走：每节先给一句话主旨，再逐段讲原文在说什么、
+          为什么这么写。术语和公式的解释放在正文右侧的边注里，读到哪看到哪。
+          每节末尾有一道自测题——答不出就说明那节没读懂，回头再看一遍比往下读划算。
+        </p>
+        <p class="gate-line">
+          <strong>适合谁读：</strong>{d.difficulty.audience}
+        </p>
+        {d.difficulty.hardParts.length > 0 && (
+          <div class="gate-hard">
+            <p class="gate-sublabel">哪里真的难，不糊弄你</p>
+            <ul>
+              {d.difficulty.hardParts.map((h: string) => <li>{h}</li>)}
+            </ul>
+          </div>
+        )}
+        {prereqs.length > 0 && (
+          <div class="gate-prereq">
+            <p class="gate-sublabel">
+              前置知识（{covered}/{prereqs.length} 条站内已有）
+            </p>
+            <ul>
+              {prereqs.map((p) => (
+                <li>
+                  {p.href ? <a href={p.href}>{p.title}</a> : <span class="missing">{p.title}</span>}
+                  {p.oneLiner && <span class="prereq-hint">{p.oneLiner}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <div class="prose classic-body">
+        <Content />
+      </div>
+
+      {
+        takeHtml && (
+          <aside class="take">
+            <p class="take-label">我的看法</p>
+            <div class="prose" set:html={takeHtml} />
+          </aside>
+        )
+      }
+
+      {
+        d.reading.length > 0 && (
+          <section class="reading">
+            <h2 id="继续读">继续读什么</h2>
+            <p class="reading-intro">由浅入深排列。前置知识里站内还没覆盖的部分，先从这里补。</p>
+            <ol>
+              {d.reading.map((r: { title: string; author?: string; note: string; url?: string; level: string }) => (
+                <li>
+                  <p class="reading-head">
+                    {r.url ? (
+                      <a href={r.url} rel="nofollow noopener" target="_blank">{r.title}</a>
+                    ) : (
+                      <span class="reading-title">{r.title}</span>
+                    )}
+                    {r.author && <span class="reading-author">{r.author}</span>}
+                    <span class="mono lvl">{LEVEL_LABELS[r.level] ?? r.level}</span>
+                  </p>
+                  <p class="reading-note">{r.note}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
+
+      <section class="sources">
+        <h2 id="来源">来源</h2>
+        <ol>
+          <li>
+            <a href={d.primary.url} rel="nofollow noopener" target="_blank">{d.primary.title}</a>
+            <span class="host">{d.primary.outlet ?? hostOf(d.primary.url)}</span>
+          </li>
+          {d.sources.map((s: { title: string; url: string; outlet?: string }) => (
+            <li>
+              <a href={s.url} rel="nofollow noopener" target="_blank">{s.title}</a>
+              <span class="host">{s.outlet ?? hostOf(s.url)}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </article>
+
+    <div class="rail-stack">
+      <Toc headings={headings} />
+      <Stamp seed={entry.id} />
+    </div>
+  </div>
+</Base>

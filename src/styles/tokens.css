@@ -15,10 +15,20 @@
   --sans: 'Inter', -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
-  /* Measure */
+  /* Measure
+   *
+   * Three zones across the page: the rail (contents/related), the measure
+   * (prose, held at a readable line length), and the margin (sidenotes).
+   * The old layout used measure+rail only and let the leftover ~19rem of the
+   * shell collapse into dead whitespace on both sides; the margin column now
+   * claims that space for annotation instead of widening the text.
+   */
   --measure: 40rem;
+  --margin: 16.5rem;
+  --margin-gap: 2rem;
   --wide: 78rem;
-  --rail: 15rem;
+  --rail: 12.5rem;
+  --zone-gap: 3.25rem;
   --step: 1.5rem;
 
   /* Dark palette (primary) */
