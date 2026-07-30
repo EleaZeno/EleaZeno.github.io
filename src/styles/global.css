@@ -452,6 +452,27 @@ main {
   font-size: inherit;
 }
 
+/*
+ * Shiki dual-theme: the highlighter emits BOTH themes, the light one as inline
+ * `color:` and the dark one as a `--shiki-dark` custom property. Without these
+ * rules the dark values are inert and code blocks stay light-on-light in dark
+ * mode. Applies to the block, every token span, and the bg.
+ */
+@media (prefers-color-scheme: dark) {
+  .prose .astro-code,
+  .prose .astro-code span {
+    color: var(--shiki-dark) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+
+  .prose .astro-code {
+    background-color: var(--shiki-dark-bg) !important;
+    border-color: var(--rule);
+  }
+}
+
 /* ---------- the "my take" block: agent commentary, visually distinct ---------- */
 
 .take {
@@ -640,3 +661,153 @@ main {
   font-size: 0.85rem;
   padding: 2rem 0;
 }
+
+/* ---------- tables ---------- */
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.8rem 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose thead th {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-weight: 600;
+  padding: 0 0.9rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.prose tbody td {
+  padding: 0.5rem 0.9rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: baseline;
+}
+
+.prose tbody tr:last-child td { border-bottom: 0; }
+
+/* ---------- math ---------- */
+
+/* KaTeX ships its own sizing; keep inline math from inflating line height
+ * and let long display math scroll instead of overflowing the measure. */
+.prose .katex { font-size: 1.02em; }
+
+.prose .katex-display {
+  margin: 1.6rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.3rem;
+}
+
+
+/* ---------- table of contents ---------- */
+
+.toc {
+  margin: 0 0 2.75rem;
+  padding: 1rem 1.2rem;
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+
+.toc-label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 0.6rem;
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.toc li { margin: 0.25rem 0; }
+
+.toc a {
+  color: var(--fg-dim);
+  text-decoration: none;
+  border-bottom: 0;
+}
+
+.toc a:hover { color: var(--accent); }
+
+/* ---------- prev/next pager ---------- */
+
+.pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.pager-side a {
+  display: block;
+  text-decoration: none;
+  border-bottom: 0;
+}
+
+.pager-next { text-align: right; }
+
+.pager-dir {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 0.35rem;
+}
+
+.pager-title {
+  display: block;
+  font-family: var(--serif);
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.pager-side a:hover .pager-title { color: var(--accent); }
+
+@media (max-width: 34rem) {
+  .pager { grid-template-columns: 1fr; }
+  .pager-next { text-align: left; }
+}
+
+
+/* ---------- 404 ---------- */
+
+.notfound {
+  max-width: var(--measure);
+  padding: 2rem 0 4rem;
+}
+
+.notfound h1 {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  line-height: 1.2;
+  margin: 0.4rem 0 0.9rem;
+}
+
+ul.plain {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+}
+
+ul.plain li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--serif);
+}
+

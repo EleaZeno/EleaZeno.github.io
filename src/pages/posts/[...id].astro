@@ -3,17 +3,22 @@ import type { InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
 import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
+import Toc from '../../components/Toc.astro';
 import { formatDate, getPublishedPosts, readingMinutes, DOMAIN_LABELS } from '../../lib/posts';
-import { tagUrl, hostOf } from '../../lib/url';
+import { tagUrl, hostOf, postUrl, domainUrl } from '../../lib/url';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+  // Neighbours for prev/next: posts is newest-first, so next = older.
+  return posts.map((post, i) => ({
+    params: { id: post.id },
+    props: { post, newer: posts[i - 1] ?? null, older: posts[i + 1] ?? null },
+  }));
 };
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { post } = Astro.props as Props;
-const { Content } = await render(post);
+const { post, newer, older } = Astro.props as Props;
+const { Content, headings } = await render(post);
 const mins = readingMinutes(post.body ?? '');
 
 const CONFIDENCE: Record<string, string> = {
@@ -25,6 +30,26 @@ const CONFIDENCE: Record<string, string> = {
 // `take` is authored as markdown in frontmatter; render it to HTML here so the
 // commentary block supports links and emphasis like the body does.
 const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
+
+// Structured data. `citation` exposes the sources to crawlers, which is the
+// machine-readable half of the same honesty the visible 来源 section provides.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  ...(post.data.updatedDate ? { dateModified: post.data.updatedDate.toISOString() } : {}),
+  inLanguage: 'zh-CN',
+  keywords: post.data.tags.join(', '),
+  url: new URL(postUrl(post.id), Astro.site).href,
+  mainEntityOfPage: new URL(postUrl(post.id), Astro.site).href,
+  author: { '@type': 'Person', name: 'Half-kantian' },
+  publisher: { '@type': 'Organization', name: 'Elea Notes' },
+  ...(post.data.sources.length
+    ? { citation: post.data.sources.map((s) => ({ '@type': 'CreativeWork', name: s.title, url: s.url })) }
+    : {}),
+};
 ---
 
 <Base
@@ -33,6 +58,7 @@ const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
   type="article"
   section="home"
 >
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
   <article class="article">
     <header class="article-head">
       <h1>{post.data.title}</h1>
@@ -40,7 +66,7 @@ const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
       <div class="byline">
         <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
         <span class="sep">/</span>
-        <span>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</span>
+        <a href={domainUrl(post.data.domain)}>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</a>
         <span class="sep">/</span>
         <span>{mins} 分钟</span>
         <span class="sep">/</span>
@@ -53,6 +79,8 @@ const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
         )}
       </div>
     </header>
+
+    <Toc headings={headings} />
 
     <div class="prose">
       <Content />
@@ -90,6 +118,29 @@ const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
             <li><a class="tag" href={tagUrl(t)}>{t}</a></li>
           ))}
         </ul>
+      )
+    }
+
+    {
+      (newer || older) && (
+        <nav class="pager" aria-label="相邻文章">
+          <div class="pager-side">
+            {older && (
+              <a href={postUrl(older.id)}>
+                <span class="pager-dir">← 更早</span>
+                <span class="pager-title">{older.data.title}</span>
+              </a>
+            )}
+          </div>
+          <div class="pager-side pager-next">
+            {newer && (
+              <a href={postUrl(newer.id)}>
+                <span class="pager-dir">更新 →</span>
+                <span class="pager-title">{newer.data.title}</span>
+              </a>
+            )}
+          </div>
+        </nav>
       )
     }
   </article>

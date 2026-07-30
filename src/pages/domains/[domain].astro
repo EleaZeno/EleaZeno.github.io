@@ -1,0 +1,31 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import Base from '../../layouts/Base.astro';
+import Entry from '../../components/Entry.astro';
+import { getPublishedPosts, DOMAIN_LABELS } from '../../lib/posts';
+
+export const getStaticPaths = async () => {
+  const posts = await getPublishedPosts();
+  const domains = [...new Set(posts.map((p) => p.data.domain))];
+  return domains.map((domain) => ({
+    params: { domain },
+    props: { domain, posts: posts.filter((p) => p.data.domain === domain) },
+  }));
+};
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { domain, posts } = Astro.props as Props;
+const label = DOMAIN_LABELS[domain] ?? domain;
+---
+
+<Base title={label} description={`${label} 相关的全部文章。`}>
+  <header class="page">
+    <p class="kicker">领域</p>
+    <h1>{label}</h1>
+    <p class="muted mono">{posts.length} 篇</p>
+  </header>
+
+  <div class="feed">
+    {posts.map((post) => <Entry post={post} as="h2" />)}
+  </div>
+</Base>

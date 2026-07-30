@@ -1,4 +1,6 @@
 ---
+import 'katex/dist/katex.min.css';
+import '../styles/fonts.css';
 import '../styles/global.css';
 import { SITE } from '../site.config';
 import { url } from '../lib/url';
@@ -40,6 +42,13 @@ const nav = [
     <meta name="twitter:card" content="summary" />
     <link rel="alternate" type="application/rss+xml" title={SITE.title} href={feedHref} />
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link
+      rel="preload"
+      href={url('fonts/source-serif-4-latin-wght-normal.woff2')}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>

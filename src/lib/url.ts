@@ -42,3 +42,8 @@ export function hostOf(link: string): string {
     return '';
   }
 }
+
+/** Href for a domain index page. */
+export function domainUrl(domain: string): string {
+  return url(`domains/${domain}`);
+}

@@ -1,6 +1,6 @@
 ---
 import { formatDate, DOMAIN_LABELS, type Post } from '../lib/posts';
-import { postUrl, tagUrl } from '../lib/url';
+import { postUrl, tagUrl, domainUrl } from '../lib/url';
 
 interface Props {
   post: Post;
@@ -17,7 +17,7 @@ const Title = as;
   <div class="entry-meta">
     {index !== undefined && <span class="num">{String(index).padStart(3, '0')}</span>}
     <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-    <span>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</span>
+    <a href={domainUrl(post.data.domain)}>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</a>
   </div>
   <div>
     <Title><a href={postUrl(post.id)}>{post.data.title}</a></Title>
