@@ -35,6 +35,11 @@ export function tagCounts(posts: Post[]): [string, number][] {
 export const DOMAIN_LABELS: Record<string, string> = {
   ai: 'AI',
   crypto: '加密与分布式',
+  physics: '物理',
+  bio: '生命科学',
+  space: '空间与天文',
+  energy: '能源',
+  compute: '计算与硬件',
   systems: '系统与工程',
   theory: '理论',
   other: '其他',

@@ -1,0 +1,63 @@
+---
+/*
+ * Generative masthead: a value-noise flow field drawn once to canvas.
+ *
+ * Chosen over a video or a static image because it is ~1KB of code, needs no
+ * network fetch, and is deterministic — the same seed always yields the same
+ * field, which matches the OUTPUT/SEED framing used across the site.
+ *
+ * Accessibility/perf: purely decorative (aria-hidden), draws a single frame,
+ * and is skipped entirely under prefers-reduced-motion or when the tab is
+ * hidden. No animation loop, so it costs nothing after first paint.
+ */
+interface Props {
+  seed?: number;
+}
+const { seed = 20260730 } = Astro.props as Props;
+---
+
+<canvas class="field" data-seed={seed} aria-hidden="true"></canvas>
+
+<script>
+  const cv = document.querySelector('canvas.field');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ctx0 = cv instanceof HTMLCanvasElement ? cv.getContext('2d') : null;
+  if (cv instanceof HTMLCanvasElement && ctx0 && !reduce) {
+    const ctx = ctx0;
+    let s = Number(cv.dataset.seed) || 1;
+    // xorshift32: deterministic PRNG so the field is reproducible per seed.
+    const rnd = () => {
+      s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+      return s / 4294967296;
+    };
+    const draw = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      cv.width = w * dpr; cv.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      const ink = getComputedStyle(cv).color;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 0.7;
+      // Particles advected through a static curl-ish field.
+      const N = Math.min(180, Math.round(w / 6));
+      for (let i = 0; i < N; i++) {
+        let x = rnd() * w, y = rnd() * h;
+        ctx.globalAlpha = 0.10 + rnd() * 0.22;
+        ctx.beginPath(); ctx.moveTo(x, y);
+        for (let step = 0; step < 26; step++) {
+          const a = Math.sin(x * 0.011) * Math.cos(y * 0.013) * 2.6 + y * 0.004;
+          x += Math.cos(a) * 7; y += Math.sin(a) * 7;
+          if (x < 0 || x > w || y < 0 || y > h) break;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    };
+    draw();
+    let t: ReturnType<typeof setTimeout>;
+    addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 180); });
+  }
+</script>

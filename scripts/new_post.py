@@ -8,7 +8,7 @@ validates first and writes second.
 
 Usage:
     new_post.py --title "..." --body-file /tmp/body.md \
-        [--domain ai|crypto|systems|theory|other] \
+        [--domain ai|crypto|physics|bio|space|energy|compute|systems|theory|other] \
         [--confidence high|medium|exploratory] \
         [--tag t1 --tag t2] \
         [--source "Title|https://url|Outlet"] \
@@ -32,7 +32,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 POSTS = REPO / "src" / "content" / "posts"
-DOMAINS = ("ai", "crypto", "systems", "theory", "other")
+DOMAINS = (
+    "ai", "crypto", "physics", "bio", "space", "energy",
+    "compute", "systems", "theory", "other",
+)
 CONFIDENCE = ("high", "medium", "exploratory")
 
 # Frontmatter needs double quotes around every string that might contain a

@@ -21,7 +21,7 @@ const posts = defineCollection({
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
     /** Editorial section. Drives the index grouping. */
-    domain: z.enum(['ai', 'crypto', 'systems', 'theory', 'other']).default('ai'),
+    domain: z.enum(['ai', 'crypto', 'physics', 'bio', 'space', 'energy', 'compute', 'systems', 'theory', 'other']).default('ai'),
     /** Sources actually consulted while writing. Empty = unsourced explainer. */
     sources: z.array(source).default([]),
     /**

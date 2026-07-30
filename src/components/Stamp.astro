@@ -1,0 +1,33 @@
+---
+/*
+ * Machine-log stamp: OUTPUT n / SEED nnnn, borrowed from the house style at
+ * nousresearch.com. Not decoration: the seed is derived from the post id, so
+ * the same post always stamps the same number — a deterministic build, which
+ * is the honest claim for a generated site.
+ */
+interface Props {
+  /** Stable string to derive the seed from (post id, section name). */
+  seed: string;
+  /** Sequence number shown as OUTPUT. */
+  output?: number;
+}
+
+const { seed, output } = Astro.props as Props;
+
+// FNV-1a: tiny, stable across builds, no crypto needed for a visual stamp.
+function fnv1a(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+const seedNum = fnv1a(seed);
+---
+
+<p class="stamp" aria-hidden="true">
+  {output !== undefined && <span>OUTPUT {output}</span>}
+  <span>SEED {seedNum}</span>
+</p>

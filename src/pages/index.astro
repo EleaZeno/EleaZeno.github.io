@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Entry from '../components/Entry.astro';
+import Field from '../components/Field.astro';
+import Stamp from '../components/Stamp.astro';
 import { getPublishedPosts, getDreams, tagCounts, formatDate } from '../lib/posts';
 import { SITE } from '../site.config';
 import { tagUrl, url } from '../lib/url';
@@ -13,6 +15,7 @@ const latestDream = dreams[0];
 
 <Base section="home">
   <section class="hero">
+    <Field />
     <p class="kicker">每日前沿观察</p>
     <h1>{SITE.description}</h1>
     <div class="stat-row">
@@ -20,6 +23,7 @@ const latestDream = dreams[0];
       <span><b>{dreams.length}</b> 则夜间笔记</span>
       {posts[0] && <span>最近更新 <b>{formatDate(posts[0].data.pubDate)}</b></span>}
     </div>
+    <Stamp seed={`elea-${posts.length}`} output={posts.length} />
   </section>
 
   {

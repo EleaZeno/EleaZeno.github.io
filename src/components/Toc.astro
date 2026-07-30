@@ -5,20 +5,21 @@ interface Props {
   headings: MarkdownHeading[];
 }
 
-const { headings } = Astro.props;
+const { headings } = Astro.props as Props;
 
-// Only h2 makes a useful outline for these posts; h3 nesting would just add
-// noise at this article length.
+// Only h2 makes a useful outline at this article length; h3 nesting adds noise.
 const items = headings.filter((h) => h.depth === 2);
 ---
 
 {
-  items.length >= 3 && (
-    <nav class="toc" aria-labelledby="toc-label">
-      <p class="toc-label" id="toc-label">目录</p>
+  items.length > 1 && (
+    <nav class="rail" aria-label="目录">
+      <p class="rail-label">目录</p>
       <ol>
         {items.map((h) => (
-          <li><a href={`#${h.slug}`}>{h.text}</a></li>
+          <li>
+            <a href={`#${h.slug}`}>{h.text}</a>
+          </li>
         ))}
       </ol>
     </nav>

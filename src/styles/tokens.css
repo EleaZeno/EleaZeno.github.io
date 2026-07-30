@@ -1,0 +1,68 @@
+/*
+ * Design tokens.
+ *
+ * The visual argument: this is an instrument that prints observations, so the
+ * page should read like a machine log that happens to be beautifully set.
+ * Ink-on-paper for prose, terminal green-cyan for anything the machine says
+ * about itself. Dark is the primary mode; light is a faithful inversion.
+ */
+
+:root {
+  color-scheme: dark light;
+
+  /* Type */
+  --serif: 'Source Serif 4', 'Songti SC', 'Noto Serif CJK SC', Georgia, serif;
+  --sans: 'Inter', -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  /* Measure */
+  --measure: 40rem;
+  --wide: 78rem;
+  --rail: 15rem;
+  --step: 1.5rem;
+
+  /* Dark palette (primary) */
+  --bg: #0a0c0f;
+  --bg-sunk: #101318;
+  --bg-raise: #151920;
+  --fg: #e8e8e3;
+  --fg-dim: #9aa3b0;
+  --fg-faint: #656e7c;
+  --rule: #1e232b;
+  --rule-strong: #2c333d;
+
+  /* One accent, borrowed from the terminal: cyan for machine voice */
+  --accent: #98f3f9;
+  --accent-deep: #4fb3c4;
+  --accent-wash: #98f3f912;
+
+  /* Semantic */
+  --ok: #7ddba0;
+  --warn: #e3c169;
+  --hot: #ff8a65;
+
+  --shadow: 0 1px 0 #ffffff08 inset;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbfbf8;
+    --bg-sunk: #f2f2ed;
+    --bg-raise: #ffffff;
+    --fg: #14171c;
+    --fg-dim: #545c68;
+    --fg-faint: #838b97;
+    --rule: #e2e2db;
+    --rule-strong: #c8c8bf;
+
+    --accent: #0e7490;
+    --accent-deep: #0b5c73;
+    --accent-wash: #0e749010;
+
+    --ok: #2f6b4f;
+    --warn: #8a6d1f;
+    --hot: #b4451f;
+
+    --shadow: none;
+  }
+}

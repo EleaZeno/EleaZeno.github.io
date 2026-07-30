@@ -4,15 +4,20 @@ import { render } from 'astro:content';
 import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
 import Toc from '../../components/Toc.astro';
-import { formatDate, getPublishedPosts, readingMinutes, DOMAIN_LABELS } from '../../lib/posts';
+import Stamp from '../../components/Stamp.astro';
+import { formatDate, readingMinutes, DOMAIN_LABELS, getPublishedPosts } from '../../lib/posts';
 import { tagUrl, hostOf, postUrl, domainUrl } from '../../lib/url';
 
 export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  // Neighbours for prev/next: posts is newest-first, so next = older.
   return posts.map((post, i) => ({
     params: { id: post.id },
-    props: { post, newer: posts[i - 1] ?? null, older: posts[i + 1] ?? null },
+    props: {
+      post,
+      // Reading order is newest-first, so "previous" is the next index.
+      newer: i > 0 ? posts[i - 1] : null,
+      older: i < posts.length - 1 ? posts[i + 1] : null,
+    },
   }));
 };
 
@@ -21,18 +26,15 @@ const { post, newer, older } = Astro.props as Props;
 const { Content, headings } = await render(post);
 const mins = readingMinutes(post.body ?? '');
 
-const CONFIDENCE: Record<string, string> = {
-  high: '结论稳定',
-  medium: '基本可靠',
-  exploratory: '仍在变动',
-};
-
-// `take` is authored as markdown in frontmatter; render it to HTML here so the
-// commentary block supports links and emphasis like the body does.
+// `take` is authored as markdown in frontmatter, so it needs rendering too.
 const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
 
-// Structured data. `citation` exposes the sources to crawlers, which is the
-// machine-readable half of the same honesty the visible 来源 section provides.
+const CONFIDENCE: Record<string, string> = {
+  high: '结论稳定',
+  medium: '仍在演进',
+  exploratory: '推测性强',
+};
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
@@ -40,15 +42,13 @@ const jsonLd = {
   description: post.data.description,
   datePublished: post.data.pubDate.toISOString(),
   ...(post.data.updatedDate ? { dateModified: post.data.updatedDate.toISOString() } : {}),
-  inLanguage: 'zh-CN',
+  author: { '@type': 'Organization', name: 'Elea Notes' },
   keywords: post.data.tags.join(', '),
-  url: new URL(postUrl(post.id), Astro.site).href,
-  mainEntityOfPage: new URL(postUrl(post.id), Astro.site).href,
-  author: { '@type': 'Person', name: 'Half-kantian' },
-  publisher: { '@type': 'Organization', name: 'Elea Notes' },
-  ...(post.data.sources.length
-    ? { citation: post.data.sources.map((s) => ({ '@type': 'CreativeWork', name: s.title, url: s.url })) }
-    : {}),
+  citation: post.data.sources.map((s: { title: string; url: string }) => ({
+    '@type': 'CreativeWork',
+    name: s.title,
+    url: s.url,
+  })),
 };
 ---
 
@@ -59,89 +59,97 @@ const jsonLd = {
   section="home"
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-  <article class="article">
-    <header class="article-head">
-      <h1>{post.data.title}</h1>
-      <p class="standfirst">{post.data.description}</p>
-      <div class="byline">
-        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-        <span class="sep">/</span>
-        <a href={domainUrl(post.data.domain)}>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</a>
-        <span class="sep">/</span>
-        <span>{mins} 分钟</span>
-        <span class="sep">/</span>
-        <span>{CONFIDENCE[post.data.confidence]}</span>
-        {post.data.generatedBy && (
-          <>
-            <span class="sep">/</span>
-            <span>{post.data.generatedBy}</span>
-          </>
-        )}
+
+  <div class="layout">
+    <article class="article">
+      <header class="article-head">
+        <h1>{post.data.title}</h1>
+        <p class="standfirst">{post.data.description}</p>
+        <div class="byline">
+          <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+          <span class="sep">/</span>
+          <a href={domainUrl(post.data.domain)}>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</a>
+          <span class="sep">/</span>
+          <span>{mins} 分钟</span>
+          <span class="sep">/</span>
+          <span>{CONFIDENCE[post.data.confidence]}</span>
+          {post.data.generatedBy && (
+            <>
+              <span class="sep">/</span>
+              <span>{post.data.generatedBy}</span>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div class="prose">
+        <Content />
       </div>
-    </header>
 
-    <Toc headings={headings} />
+      {
+        takeHtml && (
+          <aside class="take">
+            <p class="take-label">我的看法</p>
+            <div class="prose" set:html={takeHtml} />
+          </aside>
+        )
+      }
 
-    <div class="prose">
-      <Content />
-    </div>
+      {
+        post.data.sources.length > 0 && (
+          <section class="sources">
+            <h2>来源</h2>
+            <ol>
+              {post.data.sources.map((s: { title: string; url: string; outlet?: string }) => (
+                <li id={`src-${s.url.replace(/[^a-zA-Z0-9]/g, '').slice(-12)}`}>
+                  <a href={s.url} rel="nofollow noopener" target="_blank">{s.title}</a>
+                  <span class="host">{s.outlet ?? hostOf(s.url)}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
 
-    {
-      takeHtml && (
-        <aside class="take">
-          <p class="take-label">我的看法</p>
-          <div class="prose" set:html={takeHtml} />
-        </aside>
-      )
-    }
-
-    {
-      post.data.sources.length > 0 && (
-        <section class="sources">
-          <h2>来源</h2>
-          <ol>
-            {post.data.sources.map((s: { title: string; url: string; outlet?: string }) => (
+      {
+        post.data.tags.length > 0 && (
+          <ul class="tags article-tags">
+            {post.data.tags.map((t: string) => (
               <li>
-                <a href={s.url} rel="nofollow noopener external" target="_blank">{s.title}</a>
-                <span class="host"> · {s.outlet ?? hostOf(s.url)}</span>
+                <a class="tag" href={tagUrl(t)}>{t}</a>
               </li>
             ))}
-          </ol>
-        </section>
-      )
-    }
+          </ul>
+        )
+      }
 
-    {
-      post.data.tags.length > 0 && (
-        <ul class="tags" style="margin-top:2.5rem">
-          {post.data.tags.map((t: string) => (
-            <li><a class="tag" href={tagUrl(t)}>{t}</a></li>
-          ))}
-        </ul>
-      )
-    }
+      {
+        (newer || older) && (
+          <nav class="pager" aria-label="上下篇">
+            <div class="pager-side">
+              {older && (
+                <a href={postUrl(older.id)}>
+                  <span class="pager-dir">← 上一篇</span>
+                  <span class="pager-title">{older.data.title}</span>
+                </a>
+              )}
+            </div>
+            <div class="pager-side pager-next">
+              {newer && (
+                <a href={postUrl(newer.id)}>
+                  <span class="pager-dir">下一篇 →</span>
+                  <span class="pager-title">{newer.data.title}</span>
+                </a>
+              )}
+            </div>
+          </nav>
+        )
+      }
+    </article>
 
-    {
-      (newer || older) && (
-        <nav class="pager" aria-label="相邻文章">
-          <div class="pager-side">
-            {older && (
-              <a href={postUrl(older.id)}>
-                <span class="pager-dir">← 更早</span>
-                <span class="pager-title">{older.data.title}</span>
-              </a>
-            )}
-          </div>
-          <div class="pager-side pager-next">
-            {newer && (
-              <a href={postUrl(newer.id)}>
-                <span class="pager-dir">更新 →</span>
-                <span class="pager-title">{newer.data.title}</span>
-              </a>
-            )}
-          </div>
-        </nav>
-      )
-    }
-  </article>
+    <div class="rail-stack">
+      <Toc headings={headings} />
+      <Stamp seed={post.id} />
+    </div>
+  </div>
 </Base>

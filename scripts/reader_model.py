@@ -223,11 +223,28 @@ def sync_all_posts(conn: sqlite3.Connection) -> dict:
     """Rebuild coverage from disk. Safe to re-run; disk is the source of truth."""
     if not POSTS_DIR.exists():
         return {"synced": 0}
-    n = 0
+    ids = set()
     for md in sorted(POSTS_DIR.glob("*.md")):
-        record_post(conn, md)
-        n += 1
-    return {"synced": n}
+        rec = record_post(conn, md)
+        ids.add(rec["recorded"])
+    # Disk is the source of truth: drop rows whose file is gone,
+    # otherwise coverage memory keeps citing deleted posts.
+    removed = 0
+    if ids:
+        marks = ",".join("?" * len(ids))
+        cur = conn.execute(
+            f"DELETE FROM posts WHERE id NOT IN ({marks})", tuple(sorted(ids))
+        )
+        removed = cur.rowcount or 0
+    else:
+        cur = conn.execute("DELETE FROM posts")
+        removed = cur.rowcount or 0
+    # post_tags has no FK cascade, so clear its orphans explicitly.
+    conn.execute(
+        "DELETE FROM post_tags WHERE post_id NOT IN (SELECT id FROM posts)"
+    )
+    conn.commit()
+    return {"synced": len(ids), "removed": removed}
 
 
 def profile(conn: sqlite3.Connection) -> dict:
