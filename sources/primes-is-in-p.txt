@@ -1,0 +1,688 @@
+Annals of Mathematics, 160 (2004), 781–793
+PRIMES is in P
+By Manindra Agrawal, Neeraj Kayal, and Nitin Saxena*
+Abstract
+We present an unconditional deterministic polynomial-time algorithm that
+determines whether an input number is prime or composite.
+1. Introduction
+Prime numbers are of fundamental importance in mathematics in general,
+and number theory in particular. So it is of great interest to study diﬀerent
+properties of prime numbers.
+Of special interest are those properties that
+allow one to determine eﬃciently if a number is prime. Such eﬃcient tests are
+also useful in practice: a number of cryptographic protocols need large prime
+numbers.
+Let PRIMES denote the set of all prime numbers. The deﬁnition of prime
+numbers already gives a way of determining if a number n is in PRIMES: try
+dividing n by every number m ≤√n—if any m divides n then it is composite, otherwise it is prime. This test was known since the time of the ancient
+Greeks—it is a specialization of the Sieve of Eratosthenes (ca. 240 BC) that
+generates all primes less than n.
+The test, however, is ineﬃcient: it takes
+Ω(√n) steps to determine if n is prime. An eﬃcient test should need only a
+polynomial (in the size of the input = ⌈log n⌉) number of steps. A property
+that almost gives an eﬃcient test is Fermat’s Little Theorem: for any prime
+number p, and any number a not divisible by p, ap−1 = 1 (mod p). Given an
+a and n it can be eﬃciently checked if an−1 = 1 (mod n) by using repeated
+squaring to compute the (n −1)th power of a. However, it is not a correct
+test since many composites n also satisfy it for some a’s (all a’s in case of
+Carmichael numbers [Car]). Nevertheless, Fermat’s Little Theorem became
+the basis for many eﬃcient primality tests.
+Since the beginning of complexity theory in the 1960s—when the notions
+of complexity were formalized and various complexity classes were deﬁned—
+*The last two authors were partially supported by MHRD grant MHRD-CSE-20010018.
+
+782
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+this problem (referred to as the primality testing problem) has been investigated intensively. It is trivial to see that the problem is in the class co-NP: if n
+is not prime it has an easily veriﬁable short certiﬁcate, viz., a nontrivial factor
+of n. In 1974, Pratt observed that the problem is in the class NP too [Pra]
+(thus putting it in NP ∩co-NP).
+In 1975, Miller [Mil] used a property based on Fermat’s Little Theorem to
+obtain a deterministic polynomial-time algorithm for primality testing assuming the Extended Riemann Hypothesis (ERH). Soon afterwards, his test was
+modiﬁed by Rabin [Rab] to yield an unconditional but randomized polynomialtime algorithm. Independently, Solovay and Strassen [SS] obtained, in 1974,
+a diﬀerent randomized polynomial-time algorithm using the property that for
+a prime n,
+·a
+n
+
+= a
+n−1
+2
+(mod n) for every a (
+· 
+is the Jacobi symbol). Their
+algorithm can also be made deterministic under ERH. Since then, a number
+of randomized polynomial-time algorithms have been proposed for primality
+testing, based on many diﬀerent properties.
+In 1983, Adleman, Pomerance, and Rumely achieved a major breakthrough by giving a deterministic algorithm for primality that runs in
+(log n)O(log log log n) time (all the previous deterministic algorithms required exponential time). Their algorithm was (in a sense) a generalization of Miller’s
+idea and used higher reciprocity laws. In 1986, Goldwasser and Kilian [GK]
+proposed a randomized algorithm based on elliptic curves running in expected
+polynomial-time, on almost all inputs (all inputs under a widely believed hypothesis), that produces an easily veriﬁable short certiﬁcate for primality (until then, all randomized algorithms produced certiﬁcates for compositeness
+only). Based on their ideas, a similar algorithm was developed by Atkin [Atk].
+Adleman and Huang [AH] modiﬁed the Goldwasser-Kilian algorithm to obtain
+a randomized algorithm that runs in expected polynomial-time on all inputs.
+The ultimate goal of this line of research has been, of course, to obtain an
+unconditional deterministic polynomial-time algorithm for primality testing.
+Despite the impressive progress made so far, this goal has remained elusive.
+In this paper, we achieve this. We give a deterministic, O∼(log15/2 n) time
+algorithm for testing if a number is prime. Heuristically, our algorithm does
+better: under a widely believed conjecture on the density of Sophie Germain
+primes (primes p such that 2p + 1 is also prime), the algorithm takes only
+O∼(log6 n) steps. Our algorithm is based on a generalization of Fermat’s Little
+Theorem to polynomial rings over ﬁnite ﬁelds. Notably, the correctness proof
+of our algorithm requires only simple tools of algebra (except for appealing
+to a sieve theory result on the density of primes p with p −1 having a large
+prime factor—and even this is not needed for proving a weaker time bound of
+O∼(log21/2 n) for the algorithm). In contrast, the correctness proofs of earlier
+algorithms producing a certiﬁcate for primality [APR], [GK], [Atk] are much
+more complex.
+
+PRIMES IS IN P
+783
+In Section 2, we summarize the basic idea behind our algorithm. In Section 3, we ﬁx the notation used. In Section 4, we state the algorithm and
+present its proof of correctness. In Section 5, we obtain bounds on the running
+time of the algorithm. Section 6 discusses some ways of improving the time
+complexity of the algorithm.
+2. The idea
+Our test is based on the following identity for prime numbers which is a
+generalization of Fermat’s Little Theorem. This identity was the basis for a
+randomized polynomial-time algorithm in [AB]:
+Lemma 2.1. Let a ∈Z, n ∈N, n ≥2, and (a, n) = 1. Then n is prime
+if and only if
+(X + a)n = Xn + a (mod n).
+(1)
+Proof. For 0 < i < n, the coeﬃcient of xi in ((X + a)n −(Xn + a)) is
+·n
+i
+
+an−i.
+Suppose n is prime. Then
+·n
+i
+
+= 0 (mod n) and hence all the coeﬃcients
+are zero.
+Suppose n is composite. Consider a prime q that is a factor of n and
+let qk||n. Then qk does not divide
+·n
+q
+
+and is coprime to an−q and hence the
+coeﬃcient of Xq is not zero (mod n).
+Thus ((X + a)n −(Xn + a)) is not
+identically zero over Zn.
+The above identity suggests a simple test for primality: given an input n,
+choose an a and test whether the congruence (1) is satisﬁed. However, this
+takes time Ω(n) because we need to evaluate n coeﬃcients in the LHS in the
+worst case. A simple way to reduce the number of coeﬃcients is to evaluate
+both sides of (1) modulo a polynomial of the form Xr −1 for an appropriately
+chosen small r. In other words, test if the following equation is satisﬁed:
+(X + a)n = Xn + a (mod Xr −1, n).
+(2)
+From Lemma 2.1 it is immediate that all primes n satisfy the equation (2) for all
+values of a and r. The problem now is that some composites n may also satisfy
+the equation for a few values of a and r (and indeed they do). However, we
+can almost restore the characterization: we show that for appropriately chosen
+r if the equation (2) is satisﬁed for several a’s then n must be a prime power.
+The number of a’s and the appropriate r are both bounded by a polynomial
+in log n and therefore, we get a deterministic polynomial time algorithm for
+testing primality.
+
+784
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+3. Notation and preliminaries
+The class P is the class of sets accepted by deterministic polynomial-time
+Turing machines [Lee]; see [Lee] for the deﬁnitions of classes NP, co-NP, etc.
+Zn denotes the ring of numbers modulo n and Fp denotes the ﬁnite ﬁeld
+with p elements, where p is prime. Recall that if p is prime and h(X) is a
+polynomial of degree d and irreducible in Fp, then Fp[X]/(h(X)) is a ﬁnite
+ﬁeld of order pd. We will use the notation f(X) = g(X) (mod h(X), n) to
+represent the equation f(X) = g(X) in the ring Zn[X]/(h(X)).
+We use the symbol O∼(t(n)) for O(t(n) · poly(log t(n)), where t(n) is
+any function of n. For example, O∼(logk n) = O(logk n · poly(log log n)) =
+O(logk+ε n) for any ε > 0. We use log for base 2 logarithms, and ln for natural
+logarithms.
+N and Z denote the set of natural numbers and integers respectively.
+Given r ∈N, a ∈Z with (a, r) = 1, the order of a modulo r is the smallest
+number k such that ak = 1 (mod r). It is denoted as or(a). For r ∈N, φ(r)
+is Euler’s totient function giving the number of numbers less than r that are
+relatively prime to r. It is easy to see that or(a) | φ(r) for any a, (a, r) = 1.
+We will need the following simple fact about the lcm of the ﬁrst m numbers
+(see, e.g., [Nai] for a proof).
+Lemma 3.1. Let LCM(m) denote the lcm of the ﬁrst m numbers. For
+m ≥7:
+LCM(m) ≥2m.
+4. The algorithm and its correctness
+Input:
+integer n > 1.
+1.
+If (n = ab for a ∈N and b > 1), output COMPOSITE.
+2.
+Find the smallest r such that or(n) > log2 n.
+3.
+If 1 < (a, n) < n for some a ≤r, output COMPOSITE.
+4.
+If n ≤r, output PRIME.1
+5.
+For a = 1 to ⌊
+
+φ(r) log n⌋do
+if ((X + a)n̸ = Xn + a (mod Xr −1, n)), output COMPOSITE;
+6.
+Output PRIME.
+Algorithm for Primality Testing
+
+PRIMES IS IN P
+785
+Theorem 4.1. The algorithm above returns PRIME if and only if n is
+prime.
+In the remainder of the section, we establish this theorem through a sequence of lemmas. The following is trivial:
+Lemma 4.2. If n is prime, the algorithm returns PRIME.
+Proof. If n is prime then steps 1 and 3 can never return COMPOSITE.
+By Lemma 2.1, the for loop also cannot return COMPOSITE. Therefore the
+algorithm will identify n as PRIME either in step 4 or in step 6.
+The converse of the above lemma requires a little more work.
+If the
+algorithm returns PRIME in step 4 then n must be prime since otherwise
+step 3 would have found a nontrivial factor of n. So the only remaining case is
+when the algorithm returns PRIME in step 6. For the purpose of subsequent
+analysis we assume this to be the case.
+The algorithm has two main steps (2 and 5): step 2 ﬁnds an appropriate
+r and step 5 veriﬁes the equation (2) for a number of a’s. We ﬁrst bound the
+magnitude of the appropriate r.
+Lemma 4.3. There exists an r ≤max{3, ⌈log5 n⌉} such that or(n) >
+log2 n.
+Proof. This is trivially true when n = 2; r = 3 satisﬁes all conditions. So
+assume that n > 2. Then ⌈log5 n⌉> 10 and Lemma 3.1 applies. Let r1, r2,
+. . . , rt be all numbers such that either ori(n) ≤log2 n or ri divides n. Each of
+these numbers must divide the product
+n ·
+⌊log2 n⌋
+
+i=1
+(ni −1) < nlog4 n ≤2log5 n.
+By Lemma 3.1, the lcm of the ﬁrst ⌈log5 n⌉numbers is at least 2⌈log5 n⌉and
+therefore there must exist a number s ≤⌈log5 n⌉such that s̸ ∈{r1, r2, . . . , rt}.
+If (s, n) = 1 then os(n) > log2 n and we are done. If (s, n) > 1, then since s
+does not divide n and (s, n) ∈{r1, r2, . . . , rt}, r =
+s
+(s,n)̸ ∈{r1, r2, . . . , rt} and
+so or(n) > log2 n.
+Since or(n) > 1, there must exist a prime divisor p of n such that or(p) > 1.
+We have p > r since otherwise either step 3 or step 4 would decide about the
+primality of n. Since (n, r) = 1 (otherwise either step 3 or step 4 will correctly
+identify n), p, n ∈Z∗
+r . Numbers p and r will be ﬁxed in the remainder of this
+section. Also, let ℓ= ⌊
+
+φ(r) log n⌋.
+1Lemma 4.3 shows that r ≤⌈log5 n⌉, so that Step 4 is relevant only when n ≤5, 690, 034.
+
+786
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+Step 5 of the algorithm veriﬁes ℓequations. Since the algorithm does not
+output COMPOSITE in this step, we have:
+(X + a)n = Xn + a (mod Xr −1, n)
+for every a, 0 ≤a ≤ℓ(the equation for a = 0 is trivially satisﬁed). This
+implies:
+(X + a)n = Xn + a (mod Xr −1, p)
+(3)
+for 0 ≤a ≤ℓ. By Lemma 2.1, we have:
+(X + a)p = Xp + a (mod Xr −1, p)
+(4)
+for 0 ≤a ≤ℓ. From equations 3 and 4 it follows that:
+(X + a)
+n
+p = X
+n
+p + a (mod Xr −1, p)
+(5)
+for 0 ≤a ≤ℓ. Thus both n and n
+p behave like prime p in the above equation.
+We give a name to this property:
+Deﬁnition 4.4. For polynomial f(X) and number m ∈N, we say that m
+is introspective for f(X) if
+[f(X)]m = f(Xm) (mod Xr −1, p).
+It is clear from equations (5) and (4) that both n
+p and p are introspective
+for X + a when 0 ≤a ≤ℓ.
+The following lemma shows that introspective numbers are closed under
+multiplication:
+Lemma 4.5. If m and m′ are introspective numbers for f(X) then so is
+m · m′.
+Proof. Since m is introspective for f(X) we have:
+[f(X)]m·m′ = [f(Xm)]m′ (mod Xr −1, p).
+Also, since m′ is introspective for f(X), we have (after replacing X by Xm in
+the introspection equation for m′):
+[f(Xm)]m′ = f(Xm·m′) (mod Xm·r −1, p)
+= f(Xm·m′) (mod Xr −1, p) (since Xr −1 divides Xm·r −1).
+Putting together the above two equations we get:
+[f(X)]m·m′ = f(Xm·m′) (mod Xr −1, p).
+For a number m, the set of polynomials for which m is introspective is
+also closed under multiplication:
+
+PRIMES IS IN P
+787
+Lemma 4.6. If m is introspective for f(X) and g(X) then it is also
+introspective for f(X) · g(X).
+Proof. We have:
+[f(X) · g(X)]m = [f(X)]m · [g(X)]m
+= f(Xm) · g(Xm) (mod Xr −1, p).
+The above two lemmas together imply that every number in the set
+I = {(n
+p)i · pj | i, j ≥0} is introspective for every polynomial in the set
+P = {ℓ
+a=0(X + a)ea | ea ≥0}. We now deﬁne two groups based on these sets
+that will play a crucial role in the proof.
+The ﬁrst group is the set of all residues of numbers in I modulo r. This
+is a subgroup of Z∗
+r since, as already observed, (n, r) = (p, r) = 1. Let G
+be this group and |G| = t. G is generated by n and p modulo r and since
+or(n) > log2 n, t > log2 n.
+To deﬁne the second group, we need some basic facts about cyclotomic
+polynomials over ﬁnite ﬁelds. Let Qr(X) be the rth cyclotomic polynomial
+over Fp. Polynomial Qr(X) divides Xr −1 and factors into irreducible factors
+of degree or(p) [LN]. Let h(X) be one such irreducible factor. Since or(p) > 1,
+the degree of h(X) is greater than one. The second group is the set of all
+residues of polynomials in P modulo h(X) and p. Let G be this group which is
+generated by elements X, X+1, X+2, . . . , X+ℓin the ﬁeld F = Fp[X]/(h(X))
+and is a subgroup of the multiplicative group of F.
+The following lemma proves a lower bound on the size of the group G. It
+is a slight improvement on a bound shown by Hendrik Lenstra Jr. [Len], which,
+in turn, improved a bound shown in an earlier version of our paper [AKS].2
+Lemma 4.7 (Hendrik Lenstra Jr.).
+|G| ≥
+·t+ℓ
+t−1
+
+.
+Proof. First note that since h(X) is a factor of the cyclotomic polynomial
+Qr(X), X is a primitive rth root of unity in F.
+We now show that any two distinct polynomials of degree less than t
+in P will map to diﬀerent elements in G. Let f(X) and g(X) be two such
+polynomials in P. Suppose f(X) = g(X) in the ﬁeld F. Let m ∈I. We also
+have [f(X)]m = [g(X)]m in F. Since m is introspective for both f and g, and
+h(X) divides Xr −1, we get:
+f(Xm) = g(Xm)
+in F. This implies that Xm is a root of the polynomial Q(Y ) = f(Y ) −g(Y )
+for every m ∈G. Since (m, r) = 1 (G is a subgroup of Z∗
+r ), each such Xm is a
+2Macaj [Mac] also proved this lemma independently.
+
+788
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+primitive rth root of unity. Hence there will be |G| = t distinct roots of Q(Y )
+in F. However, the degree of Q(Y ) is less than t by the choice of f and g. This
+is a contradiction and therefore, f(X)̸ = g(X) in F.
+Note that i̸ = j in Fp for 1 ≤i̸ = j ≤ℓsince ℓ= ⌊
+
+φ(r) log n⌋<
+√r log n < r and p > r. So the elements X, X + 1, X + 2, . . . , X + ℓare all
+distinct in F. Also, since the degree of h is greater than one, X + a̸ = 0 in
+F for every a, 0 ≤a ≤ℓ. So there exist at least ℓ+ 1 distinct polynomials of
+degree one in G. Therefore, there exist at least
+·t+ℓ
+t−1
+
+distinct polynomials of
+degree < t in G.
+In case n is not a power of p, the size of G can also be upper bounded:
+Lemma 4.8. If n is not a power of p then |G| ≤n
+√
+t.
+Proof. Consider the following subset of I:
+ˆI = {(n
+p )i · pj | 0 ≤i, j ≤⌊
+√
+t⌋}.
+If n is not a power of p then the set ˆI has (⌊
+√
+t⌋+ 1)2 > t distinct numbers.
+Since |G| = t, at least two numbers in ˆI must be equal modulo r. Let these be
+m1 and m2 with m1 > m2. So we have:
+Xm1 = Xm2 (mod Xr −1).
+Let f(X) ∈P. Then,
+[f(X)]m1 = f(Xm1) (mod Xr −1, p)
+= f(Xm2) (mod Xr −1, p)
+= [f(X)]m2 (mod Xr −1, p).
+This implies
+[f(X)]m1 = [f(X)]m2
+in the ﬁeld F.
+Therefore, f(X) ∈G is a root of the polynomial Q′(Y ) =
+Y m1−Y m2 in the ﬁeld F.3 As f(X) is an arbitrary element of G, the polynomial
+Q′(Y ) has at least |G| distinct roots in F.
+The degree of Q′(Y ) is m1 ≤
+(n
+p · p)⌊
+√
+t⌋≤n
+√
+t. This shows |G| ≤n
+√
+t.
+Armed with these estimates on the size of G, we are now ready to prove
+the correctness of the algorithm:
+Lemma 4.9. If the algorithm returns PRIME then n is prime.
+3This formulation of the argument is by Adam Kalai, Amit Sahai, and Madhu Sudan
+[KSS].
+
+PRIMES IS IN P
+789
+Proof. Suppose that the algorithm returns PRIME. Lemma 4.7 implies
+that for t = |G| and ℓ= ⌊
+
+φ(r) log n⌋:
+|G|
+≥
+t + ℓ
+t −1
+
+≥
+ℓ+ 1 + ⌊
+√
+t log n⌋
+⌊
+√
+t log n⌋
+
+(since t >
+√
+t log n)
+≥
+2⌊
+√
+t log n⌋+ 1
+⌊
+√
+t log n⌋
+
+(since ℓ= ⌊
+
+φ(r) log n⌋≥⌊
+√
+t log n⌋)
+> 2⌊
+√
+t log n⌋+1
+(since ⌊
+√
+t log n⌋> ⌊log2 n⌋≥1)
+≥n
+√
+t.
+By Lemma 4.8, |G| ≤n
+√
+t if n is not a power of p. Therefore, n = pk for
+some k > 0. If k > 1 then the algorithm will return COMPOSITE in step 1.
+Therefore, n = p.
+This completes the proof of Theorem 4.1.
+5. Time complexity analysis and improvements
+It is straightforward to calculate the time complexity of the algorithm. In
+these calculations we use the fact that addition, multiplication, and division operations between two m bits numbers can be performed in time O∼(m) [vzGG].
+Similarly, these operations on two degree d polynomials with coeﬃcients at
+most m bits in size can be done in time O∼(d · m) steps [vzGG].
+Theorem 5.1. The asymptotic time complexity of the algorithm is
+O∼(log21/2 n).
+Proof. The ﬁrst step of the algorithm takes asymptotic time O∼(log3 n)
+[vzGG].
+In step 2, we ﬁnd an r with or(n) > log2 n. This can be done by trying
+out successive values of r and testing if nk̸ = 1 (mod r) for every k ≤log2 n.
+For a particular r, this will involve at most O(log2 n) multiplications modulo
+r and so will take time O∼(log2 n log r). By Lemma 4.3 we know that only
+O(log5 n) diﬀerent r’s need to be tried. Thus the total time complexity of
+step 2 is O∼(log7 n).
+The third step involves computing the gcd of r numbers. Each gcd computation takes time O(log n) [vzGG], and therefore, the time complexity of this
+step is O(r log n) = O(log6 n). The time complexity of step 4 is just O(log n).
+In step 5, we need to verify ⌊
+
+φ(r) log n⌋equations. Each equation requires O(log n) multiplications of degree r polynomials with coeﬃcients of
+
+790
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+size O(log n).
+So each equation can be veriﬁed in time O∼(r log2 n) steps.
+Thus the time complexity of step 5 is O∼(r
+
+φ(r) log3 n) = O∼(r
+3
+2 log3 n) =
+O∼(log21/2 n). This time dominates all the others and is therefore the time
+complexity of the algorithm.
+The time complexity of the algorithm can be improved by improving the
+estimate for r (done in Lemma 4.3). Of course the best possible scenario would
+be when r = O(log2 n) and in that case the time complexity of the algorithm
+would be O∼(log6 n).
+In fact, there are two conjectures that support the
+possibility of such an r (below ln is the natural logarithm):
+Artin’s Conjecture.
+Given any number n ∈N that is not a perfect
+square, the number of primes q ≤m for which oq(n) = q −1 is asymptotically
+A(n) ·
+m
+ln m where A(n) is Artin’s constant with A(n) > 0.35.
+Sophie-Germain Prime Density Conjecture.
+The number of primes
+q ≤m such that 2q + 1 is also a prime is asymptotically 2C2m
+ln2 m where C2 is
+the twin prime constant (estimated to be approximately 0.66). Primes q with
+this property are called Sophie-Germain primes.
+Artin’s conjecture—if it becomes eﬀective for m = O(log2 n)—immediately
+shows that there is an r = O(log2 n) with the required properties. There has
+been some progress towards proving Artin’s conjecture [GM], [GMM], [HB],
+and it is also known that this conjecture holds under the Generalized Riemann
+Hypothesis.
+If the second conjecture holds, we can conclude that r = O∼(log2 n):
+By the density of Sophie-Germain primes, there must exist at least
+log2 n such primes between 8 log2 n and c log2 n(log log n)2 for a
+suitable constant c.
+For any such prime q, either oq(n) ≤2 or
+oq(n) ≥q−1
+2 . Any q for which oq(n) ≤2 must divide n2 −1 and
+so the number of such q is bounded by O(log n). This implies that
+there must exist a prime r = O∼(log2 n) such that or(n) > log2 n.
+Such an r will yield an algorithm with time complexity O∼(log6 n).
+There has been progress towards proving this conjecture as well. Let P(m)
+denote the greatest prime divisor of number m. Goldfeld [Gol] showed that
+primes q with P(q −1) > q
+1
+2+c, c ≈1
+12, occur with positive density. Improving
+upon this, Fouvry has shown:
+Lemma 5.2 ([Fou]).
+There exist constants c > 0 and n0 such that, for
+all x ≥n0:
+|{q | q is prime, q ≤x and P(q −1) > q
+2
+3 }| ≥c x
+ln x.
+
+PRIMES IS IN P
+791
+The above lemma is now known to hold for exponents up to 0.6683 [BH].
+Using the above lemma, we can improve the analysis of our algorithm:
+Theorem 5.3. The asymptotic time complexity of the algorithm is
+O∼(log15/2 n).
+Proof. As argued above, a high density of primes q with P(q −1) > q
+2
+3
+implies that step 2 of the algorithm will ﬁnd an r = O(log3 n) with or(n) >
+log2 n. This brings the complexity of the algorithm down to O∼(log15/2 n).
+Recently, Hendrik Lenstra and Carl Pomerance [LP1] have come up with a
+modiﬁed version of our algorithm whose time complexity is provably O∼(log6 n).
+6. Future work
+In our algorithm, the loop in step 5 needs to run for ⌊
+
+φ(r) log n⌋times to
+ensure that the size of the group G is large enough. The number of iterations of
+the loop could be reduced if we could show that a still smaller set of (X + a)’s
+generates a group of the required size. This seems very likely.
+One can further improve the complexity to O∼(log3 n) if the following
+conjecture—given in [BP] and veriﬁed for r ≤100 and n ≤1010 in [KS]—is
+proved:
+Conjecture 6.1. If r is a prime number that does not divide n and if
+(X −1)n = Xn −1 (mod Xr −1, n),
+(6)
+then either n is prime or n2 = 1 (mod r).
+If this conjecture is true, we can modify the algorithm slightly to search
+ﬁrst for an r which does not divide n2 −1. Such an r can assuredly be found in
+the range [2, 4 log n]. This is because the product of prime numbers less than
+x is at least ex (see [Apo]). Thereafter we can test whether the congruence (6)
+holds or not. Verifying the congruence takes time O∼(r log2 n). This gives a
+time complexity of O∼(log3 n).
+Recently, Hendrik Lenstra and Carl Pomerance [LP2] have given a heuristic argument which suggests that the above conjecture is false. However, some
+variant of the conjecture may still be true (for example, if we force r > log n).
+Acknowledgments.We wish to express our gratitude to Hendrik Lenstra Jr.
+for allowing us to use his observation on improving the lower bound on the size
+of the group G. This has made the proof completely elementary (an earlier
+version required the density bound of Lemma 5.2), simpliﬁed the proof and
+improved the time complexity!
+
+792
+MANINDRA AGRAWAL, NEERAJ KAYAL, AND NITIN SAXENA
+We are also thankful to Adam Kalai, Amit Sahai, and Madhu Sudan for
+allowing us to use their proof of Lemma 4.8. This has made the proofs of both
+upper and lower bounds on the size of G similar (both are now based on the
+number of roots of a polynomial in a ﬁeld).
+We
+thank
+Somenath
+Biswas,
+Rajat
+Bhattacharjee,
+Jaikumar
+Radhakrishnan, and V. Vinay for many useful discussions.
+We thank Erich Bach, Abhijit Das, G. Harman, Roger Heath-Brown,
+Pieter Moree, Richard Pinch, and Carl Pomerance for providing us with useful
+references.
+Since our preprint appeared, a number of researchers took the trouble of
+pointing out various omissions in our paper. We are thankful to all of them.
+We have tried to incorporate their suggestions in the paper and our apologies
+if we missed out on some.
+Finally, we thank the anonymous referee of the paper whose suggestions
+and observations have been very useful.
+Department of Computer Science & Engineering, Indian Institute of
+Technology Kanpur, Kanpur, India
+E-mail addresses: manindra@cse.iitk.ac.in
+nitinsa@cse.iitk.ac.in
+kayaln@cse.iitk.ac.in
+References
+[AH]
+L. M. Adleman and M.-D. Huang, Primality Testing and Abelian Varieties over
+Finite Fields, Lecture Notes in Math. 1512, Springer-Verlag, New York, 1992.
+[APR]
+L. M. Adleman, C. Pomerance, and R. S. Rumely, On distinguishing prime numbers
+from composite numbers, Ann. of Math. 117 (1983), 173–206.
+[AB]
+M. Agrawal and S. Biswas, Primality and identity testing via Chinese remaindering,
+Journal of the ACM 50 (2003), 429–443.
+[AKS]
+M.
+Agrawal,
+N.
+Kayal,
+and
+N.
+Saxena,
+PRIMES
+is
+in
+P,
+preprint
+(http://www.cse.iitk.ac.in/news/primality.ps), August 2002.
+[Apo]
+T. M. Apostol, Introduction to Analytic Number Theory, Springer-Verlag, New
+York, 1997.
+[Atk]
+A. O. L. Atkin, Lecture notes of a conference, Boulder (Colorado), Manuscript,
+August 1986.
+[BH]
+R. C. Baker and G. Harman, The Brun-Titchmarsh Theorem on average, in Analytic Number Theory, Volume I (Allerton Park, IL, 1995), Progr. Math. 138,
+39–103, Birkh¨auser Boston, Boston, MA, 1996.
+[BP]
+R. Bhattacharjee and P. Pandey, Primality testing, Technical report, IIT Kanpur,
+2001; available at http://www.cse.iitk.ac.in/research/btp2001/primality.html.
+[Car]
+R. D. Carmichael, Note on a number theory function, Bull. Amer. Math. Soc. 16
+(1910), 232–238.
+[Fou]
+E. Fouvry, Th´eor`eme de Brun-Titchmarsh; application au th´eor`eme de Fermat,
+Invent. Math. 79 (1985), 383–407.
+
+PRIMES IS IN P
+793
+[GK]
+S. Goldwasser and J. Kilian, Almost all primes can be quickly certiﬁed, in Proc.
+Annual ACM Symposium on the Theory of Computing, 316–329, 1986.
+[GM]
+R. Gupta and M. Ram Murty, A remark on Artin’s conjecture, Invent. Math. 78
+(1984), 127–130.
+[GMM]
+R. Gupta, V. Kumar Murty, and M. Ram Murty, The Euclidian algorithm for
+S-integers, Number Theory (Montreal, Que., 1985), CMS Conf. Proc. 7 (1987),
+189–202.
+[Gol]
+M. Goldfeld, On the number of primes p for which p + a has a large prime factor,
+Mathematika 16 (1969), 23–27.
+[HB]
+D. R. Heath-Brown, Artin’s conjecture for primitive roots, Quart. J. Math. Oxford
+37 (1986), 27–38.
+[KS]
+N.
+Kayal
+and
+N.
+Saxena,
+Towards
+a
+deterministic
+polynomial-time
+test,
+Technical report,
+IIT Kanpur,
+2002;
+available at http://www.cse.iitk.ac.in/
+research/btp2002/primality.html.
+[KSS]
+A. Kalai, A. Sahai, and M. Sudan, Notes on primality test and analysis of AKS,
+Private communication, August 2002.
+[Lee]
+J. V. Leeuwen (ed.), Handbook of Theoretical Computer Science, Volume A, MIT
+Press, Cambridge, MA, 1990.
+[Len]
+H. W. Lenstra, Jr., Primality testing with cyclotomic rings, unpublished (see
+http://cr.yp.to/papers.html#aks for an exposition of Lenstra’s argument), August
+2002.
+[LN]
+R. Lidl and H. Niederreiter, Introduction to Finite Fields and their Applications,
+Cambridge Univ. Press, Cambridge, 1986.
+[LP1]
+H. W. Lenstra, Jr. and C. Pomerance, Primality testing with gaussian periods,
+Private communication, March 2003.
+[LP2]
+———, Remarks on Agrawal’s conjecture, unpublished (http://www.aimath.org/
+WWN/ primesinp/articles/html/50a/), March 2003.
+[Mac]
+M. Macaj, Some remarks and questions about the AKS algorithm and related conjecture,
+unpublished
+(http://thales.doa.fmph.uniba.sk/macaj/aksremarks.pdf),
+December 2002.
+[Mil]
+G. L. Miller, Riemann’s hypothesis and tests for primality, J. Comput. Sys. Sci.
+13 (1976), 300–317.
+[Nai]
+M. Nair, On Chebyshev-type inequalities for primes, Amer. Math. Monthly 89
+(1982), 126–129.
+[Pra]
+V. Pratt, Every prime has a succinct certiﬁcate, SIAM Journal on Computing 4
+(1975), 214–220.
+[Rab]
+M. O. Rabin, Probabilistic algorithm for testing primality, J. Number Theory 12
+(1980), 128–138.
+[SS]
+R. Solovay and V. Strassen, A fast Monte-Carlo test for primality, SIAM Journal
+on Computing 6 (1977), 84–86.
+[vzGG]
+J. von zur Gathen and J. Gerhard, Modern Computer Algebra, Cambridge Univ.
+Press, Cambridge, 1999.
+(Received January 24, 2003)

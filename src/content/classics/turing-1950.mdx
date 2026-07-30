@@ -1,0 +1,253 @@
+---
+title: 计算机器与智能逐节拆解
+originalTitle: "Computing Machinery and Intelligence"
+author: A. M. Turing
+originalYear: 1950
+description: 图灵没有定义"思考"，也没给出通过与否的判据。他把一个无法回答的问题换成一个可操作的问题，然后花近一半篇幅逐一处理九种反驳——包括一种今天的教材都不愿重印的。
+pubDate: 2026-07-31
+field: philosophy
+tags: ["哲学", "人工智能", "图灵", "心智", "事实核查"]
+primary:
+  title: "Computing Machinery and Intelligence (Mind 59: 433-460)"
+  url: https://courses.cs.umbc.edu/471/papers/turing.pdf
+  outlet: Mind
+primaryChecksum: "sha256:3cd7c57944b7b53f18fb2a7c014fe2367f3576696a1d024c840151459da2f24e"
+primaryChecksumNote: >-
+  底本为 UMBC 镜像 PDF（22 页，91,972 字节，OCR 自 Mind 原刊）。全文英文引文逐条按此底本校对。
+  该 OCR 有少量字符级瑕疵（如 f/I 混淆、"progratiirne"），凡引用处均已避开受损片段。
+  上标在抽取中丢失：底本的 109 即原刊的 10 的 9 次方。
+difficulty:
+  minutes: 50
+  audience: 高中生起。不需要数学或编程基础。真正的门槛是耐心——图灵的论证方式是穷举反驳，读起来像看一个人独自下完一整盘棋。
+  hardParts:
+    - 第 1 节的模仿游戏原始设定是三人游戏、判断男女，机器是第二步才替换 A 的角色。这个双层结构在传播中几乎总被简化掉，而它决定了这个测验测的到底是什么。
+    - 第 5 节的通用性论证：数字计算机可以模拟任何离散状态机。这是图灵 1936 年那篇的结论在这里被当作已知前提使用。
+    - 第 6 节第 3 条数学反驳引用了哥德尔不完备定理。图灵的回应不是反驳定理，而是指出它同样适用于人——这一步很容易读漏。
+    - "那个著名预测有三个参数：五十年、10⁹ 存储、70% 识别率。三者是一个复合命题，拆开单独引用会失真。"
+reading:
+  - title: "Minds, brains, and programs"
+    author: John R. Searle
+    note: 中文屋论证的原文。它不否认机器能通过测验，而是主张通过了也不构成理解——正面攻击本文第 6 节第 4 个反驳被图灵驳回的那一步。读完这篇再回看图灵的回应，你会发现两人其实在争"什么算证据"
+    url: https://doi.org/10.1017/S0140525X00005756
+    level: core
+    relation: counter
+    concepts: ["chinese-room", "imitation-game"]
+  - title: "Psychologism and Behaviorism"
+    author: Ned Block
+    note: 提出著名的"查表机"反例：一台足够大的机器可以靠预存所有对话通过测验，却显然没有智能。这是对模仿游戏最锋利的技术性反驳
+    url: https://doi.org/10.2307/2184371
+    level: deep
+    relation: counter
+    concepts: ["imitation-game"]
+  - title: "Subcognition and the Limits of the Turing Test"
+    author: Robert M. French
+    note: 论证模仿游戏实际测的是"是否拥有人类的亚认知联想结构"，因此它是一个人类文化成员资格测验，而不是智能测验。对"测的到底是什么"这个问题给出了最好的分析
+    url: https://doi.org/10.1093/oso/9780198235934.003.0002
+    level: deep
+    relation: counter
+    concepts: ["imitation-game"]
+  - title: "On Computable Numbers, with an Application to the Entscheidungsproblem"
+    author: A. M. Turing
+    note: 图灵 1936 年的论文。本文第 5 节"数字计算机是通用的"这个前提，证明在那里。想知道"通用机"凭什么通用就读它
+    url: https://doi.org/10.1112/plms/s2-42.1.230
+    level: deep
+    relation: upstream
+    concepts: ["universal-machine"]
+  - title: "Computing Machinery and Intelligence 的 Mind 原刊页扫描"
+    author: Mind, Vol. 59, No. 236
+    note: 本文底本是 OCR 版，有少量字符瑕疵。要引用原文时以原刊扫描为准
+    url: https://doi.org/10.1093/mind/LIX.236.433
+    level: intro
+    relation: upstream
+    concepts: []
+  - title: "The Winograd Schema Challenge"
+    author: Hector J. Levesque, Ernest Davis, Leora Morgenstern
+    note: 一个替代方案：用需要常识消歧的句子取代自由对话，避免模仿游戏可以被话术绕过的问题。代表了"图灵测验该被什么取代"这条线
+    url: https://cdn.aaai.org/ocs/4492/4492-21843-1-PB.pdf
+    level: core
+    relation: downstream
+    concepts: ["imitation-game"]
+---
+
+import Sidenote from '../../components/Sidenote.astro';
+import Check from '../../components/Check.astro';
+import Prereq from '../../components/Prereq.astro';
+
+<Prereq of={["imitation-game", "universal-machine", "chinese-room"]} />
+
+## 读之前：这篇论文的体裁
+
+二十八页，没有一个公式，没有一张表，没有实验数据。它是一篇**哲学论文**，用的是哲学的方法：提出一个论题，然后穷举反对意见，逐一应对。
+
+它的历史地位常被误述，所以先把三件事说清楚：
+
+- 图灵**没有**把这个测验叫做"图灵测验"。这个名字是后人给的。原文的名字是 the imitation game（模仿游戏）。
+- 图灵**没有**给出任何通过标准。他给的是一个五十年后的经验预测，不是一条判据。这两者的区别在本文第 6 节详述。
+- 图灵**没有**主张这个测验定义了智能。他明确说原来那个问题"不值得讨论"，换成新问题是为了让讨论可以进行下去。
+
+如果你只从二手材料听说过"图灵测验"，这篇会推翻你至少两个印象。
+
+## 1. The Imitation Game：三个人，不是两个人
+
+开篇第一句：
+
+> I propose to consider the question, "Can machines think?"
+
+然后他立刻拒绝了回答它。因为要回答就得先定义 machine 和 think，而定义会陷入词义之争。他的办法是换一个问题。
+
+原始设定是这样的：
+
+> It is played with three people, a man (A), a woman (B), and an interrogator (C) who may be of either sex.
+
+注意这一步：**最初的游戏里没有机器**。三个人，A 是男人，B 是女人，C 是审问者。C 与 A、B 通过打字交流，任务是判断谁是男谁是女。而 **A 的目标是让 C 判断错误**，B 的目标是帮助 C 判断正确。
+
+机器是在第二步才进场的：
+
+> We now ask the question, "What will happen when a machine takes the part of A in this game?" Will the interrogator decide wrongly as often when the game is played like this as he does when the game is played between a man and a woman?
+
+<Sidenote kind="caution">
+这里是全篇最常被简化掉的地方。流行版本的"图灵测验"是**机器 vs 人，判断谁是机器**。原文是**机器接替一个正在假装女人的男人**，基准线是"男人假装女人的成功率"。差别不只是形式：原始设定里，成功的标准是相对的（不比人类模仿者差），而不是绝对的（骗过审问者）。
+</Sidenote>
+
+这个替换带来一个后果，图灵自己点了出来：
+
+> The new problem has the advantage of drawing a fairly sharp line between the physical and the intellectual capacities of a man.
+
+打字这个界面把外形、声音、动作全部隔离掉了。机器不需要长得像人，只需要**答得像**。这是一个刻意的窄化。
+
+<Sidenote kind="why">
+为什么用打字而不是当面对话——图灵在原文里说，如果要求机器有人的外形和声音，问题就变成了造仿真人，而那与"能否思考"无关。今天所有基于文本的 AI 评测都继承了这个设计决定。
+</Sidenote>
+
+图灵还回答了"这种问答形式够不够宽"这个疑虑：
+
+> The question and answer method seems to be suitable for introducing almost any one of the fields of human endeavour that we wish to include.
+
+<Check q="原始模仿游戏里，审问者要判断的是什么？">
+判断谁是男人、谁是女人——不是判断谁是机器。机器的角色是接替那个"假装女人的男人"（A），衡量标准是它骗过审问者的频率是否不低于人类男性做同一件事的频率。
+</Check>
+
+## 4-5. Digital Computers：为什么只讨论数字计算机就够了
+
+第 4 节介绍数字计算机的三部分：store（存储）、executive unit（运算单元）、control（控制）。1950 年这些词还需要解释，图灵用的类比是办公职员和纸笔。
+
+第 5 节是关键的收缩步骤。图灵论证数字计算机是**离散状态机**，而任何离散状态机的行为都可以被数字计算机模拟。所以：
+
+> This special property of digital computers, that they can mimic any discrete-state machine, is described by saying that they are universal machines.
+
+这一步把问题从"某台机器能不能思考"收窄成"数字计算机能不能思考"——因为如果任何离散状态机都能被数字计算机模拟，那么讨论其他构造方式就没有额外收益。
+
+<Sidenote kind="why">
+这个"通用性"结论不是本文证明的，是图灵 1936 年那篇论文的成果在这里被当作已知前提使用。这也是为什么本文的前置阅读里有那一篇。
+</Sidenote>
+
+于是原来那个问题被替换成一个具体得多的问题：
+
+> Let us fix our attention on one particular digital computer C. Is it true that by modifying this computer to have an adequate storage, suitably increasing its speed of action, and providing it with an appropriate programme, C can be made to play satisfactorily the part of A in the imitation game, the part of B being taken by a man?
+
+## 6. 那个被反复错引的预测
+
+这是全文被引用最多、也被拆解得最不完整的一段。完整的句子是：
+
+> I believe that in about fifty years' time it will be possible, to programme computers, with a storage capacity of about 10⁹, to make them play the imitation game so well that an average interrogator will not have more than 70 per cent chance of making the right identification after five minutes of questioning.
+
+四个条件是一个整体：**五十年**、**约 10⁹ 存储**、**平均水平的审问者**、**五分钟提问**、正确识别率**不超过 70%**。
+
+<Sidenote kind="math">
+70% 这个数字的方向容易读反。它说的是审问者**猜对**的概率不超过 70%，也就是机器至少有 30% 的概率骗过对方。这不是"通过"的标准，这是图灵对技术进展的一个量化猜测。
+</Sidenote>
+
+紧接着的下一句，才是他对原问题的真正态度：
+
+> The original question, "Can machines think?" I believe to be too meaningless to deserve discussion.
+
+<Sidenote kind="caution">
+这句话经常被单独摘出来当作图灵"回避问题"的证据。放回上下文看，它是一个方法论立场：他认为"机器能否思考"是个词义问题，而词义会随使用而变。所以他紧接着预测的是**语言习惯的变化**，不是技术指标——他说到本世纪末，人们将可以谈论机器思考而不被反驳。
+</Sidenote>
+
+<Check q="图灵的五十年预测，预测的对象是什么？">
+不是"机器会通过测验"，而是一个复合的经验命题：约 10⁹ 存储容量的计算机，能让一个普通审问者在五分钟提问后的正确识别率降到 70% 以下。同时他还预测了一件非技术的事——人们谈论"机器思考"时不再会被反驳。
+</Check>
+
+## 6（续）. 九种反驳：论文真正的主体
+
+这一节占全文近一半篇幅。图灵列出九种反对意见并逐一应对。完整清单如下——注意第 9 个，它在今天的教材里几乎总被删掉：
+
+| # | 反驳 | 图灵的回应要点 |
+|---|---|---|
+| 1 | The Theological Objection（神学） | 思考是灵魂的功能，上帝只赋予人类。图灵答：这限制了上帝的全能；造机器不比生孩子更僭越 |
+| 2 | The "Heads in the Sand" Objection（把头埋进沙里） | 机器思考的后果太可怕，希望它不可能。图灵直接指出这不是论证，是安慰 |
+| 3 | The Mathematical Objection（数学） | 引哥德尔与图灵自己的不可判定性结果，指出机器有回答不了的问题。图灵答：人类同样有 |
+| 4 | The Argument from Consciousness（意识） | 机器没有感受，写不出真正的诗。图灵答：这个标准会导致唯我论——你也无法证明别人有意识 |
+| 5 | Arguments from Various Disabilities（各种能力缺陷） | "机器永远不能 X"。图灵答：这类主张多半来自对少数机器的归纳，样本太小 |
+| 6 | Lady Lovelace's Objection（洛夫莱斯夫人） | 机器只能做我们命令它做的事，不能 originate anything。图灵答：这假设了机器不会让我们意外，而事实上它经常让我们意外 |
+| 7 | Continuity in the Nervous System（神经系统的连续性） | 大脑不是离散状态机。图灵答：离散机器可以逼近连续系统到审问者分辨不出的程度 |
+| 8 | The Argument from Informality of Behaviour（行为无法形式化） | 人的行为没有规则可循，机器只能守规则。图灵答：混淆了"行为规则"与"行为定律" |
+| 9 | The Argument from Extrasensory Perception（超感官知觉） | 若心灵感应存在，人类审问者可以靠它作弊 |
+
+第 9 个值得单独说。图灵写：
+
+> Unfortunately the statistical evidence, at least for telepathy, is overwhelming.
+
+<Sidenote kind="caution">
+这句话按今天的标准是错的——心灵感应的统计证据后来被证明不成立（主要是实验设计缺陷与发表偏倚）。这一段在多数教材里被静默删除。我们保留它，因为一篇论文里作者判断失误的部分，和判断正确的部分同样是史料。而且这一段暴露了图灵的方法：他连自己不喜欢的反驳也照样处理，甚至为它设计了补救方案（"telepathy-proof room"）。
+</Sidenote>
+
+洛夫莱斯那条（第 6 条）值得看原文，因为它今天仍是最常听到的反驳。图灵引用的是 1842 年的原话：
+
+> The Analytical Engine has no pretensions to originate anything. It can do whatever we know how to order it to perform
+
+图灵的回应是把它拆成两个不同的主张：机器不能让我们意外（可以经验检验，且是假的），以及机器不能真正创造（这是关于"创造"这个词该怎么用的问题）。
+
+## 7. Learning Machines：论文的最后一步，也是最被低估的一步
+
+最后一节图灵问：怎么才能造出这样的机器？他的答案不是"写一个足够聪明的程序"。
+
+> Instead of trying to produce a programme to simulate the adult mind, why not rather try to produce one which simulates the child's? If this were then subjected to an appropriate course of education one would obtain the adult brain.
+
+<Sidenote kind="why">
+这是全文对今天最有直接关系的一段。图灵在 1950 年主张：不要手写智能，要造一个可学习的初始系统，然后训练它。他甚至算过工作量——按他自己每天写出约一千位程序的速度，六十个人稳定工作五十年可以完成，前提是"if nothing went into the wastepaper basket"（没有任何东西被扔进废纸篓）。他紧接着自己评论：显然需要更省力的方法。
+</Sidenote>
+
+他也预见了这条路的代价：教育过程会引入随机性和错误，而这是必要的。最后一段的开头是那句常被单独引用的：
+
+> We may hope that machines will eventually compete with men in all purely intellectual fields.
+
+而全文真正的收尾是一句更克制的话——这才是论文的最后一句：
+
+> We can only see a short distance ahead, but we can see plenty there that needs to be done.
+
+<Check q="图灵建议如何造出能通过模仿游戏的机器？">
+不是直接编写一个模拟成年心智的程序，而是先造一个模拟儿童心智的系统——机制少、空白多——再让它经历一个适当的教育过程。今天的机器学习范式与这个建议同源。
+</Check>
+
+## 附：论文没说，但常被说成它说了的
+
+逐条用 grep 在底本里核过：
+
+| 常见说法 | 底本里的事实 |
+|---|---|
+| 提出了"图灵测验"（Turing test） | `Turing test` 出现 **0** 次。原文的名字是 the imitation game |
+| 给出了通过标准 | 没有任何判据。只有一个五十年后的经验预测，含 10⁹ 存储、五分钟、70% 三个参数 |
+| 主张通过测验就等于会思考 | 相反：他说 "Can machines think?" 这个问题 too meaningless to deserve discussion |
+| 是机器 vs 人、判断谁是机器 | 原始设定是三人游戏，判断男女；机器接替"假装女人的男人"这一角色 |
+| 提到了图灵机 | `Turing machine` 0 次。第 5 节讲的是 discrete-state machine 和 universal machine |
+| 提到了人工智能 | `artificial intelligence` 0 次——这个词 1955 年才出现 |
+| 提到了神经网络 | `neural network` 0 次。第 7 节讲的是"儿童机器"加教育 |
+| 提到了算法 | `algorithm` 0 次。他用的词是 programme、rule、instruction table |
+| 是一篇科幻式的乐观宣言 | 全文近一半篇幅在处理反对意见，其中一条（第 9 条超感官知觉）他自己承认对自己不利 |
+| 图灵预测 2000 年机器能通过 | 他预测的是"五十年后"（即 2000 年前后）达到 70% 那个具体指标，以及本世纪末**语言习惯**的改变。两件事常被混为一谈 |
+
+<Sidenote kind="term">
+`10⁹` 在底本 OCR 里呈现为 `109`。原刊是 10 的 9 次方（约十亿），单位是二进制位，约合 125 MB。图灵自己给了两个标尺：《大英百科全书》第 11 版的容量是 `2 × 10⁹`，而他当时那台 Manchester 机的存储是 165,000 位——也就是说，他要求的存储量约是手边机器的六千倍。
+</Sidenote>
+
+## 这篇论文今天该怎么读
+
+三个我认为站得住的判断：
+
+**它的方法比它的结论重要。** 图灵最有价值的动作不是预测，而是**把一个无法回答的问题替换成一个可操作的问题**。这个动作本身可以复用到任何"X 是不是真的 Y"的争论上：先问"什么样的观察会让你改变看法"。
+
+**它的预测大体落空，但落空的方式很有意思。** 五十年后（2000 年）没有系统达到那个指标；而二十多年后的今天，文本对话已经足以让很多人在五分钟内判断不出。真正错的不是时间尺度，是他以为需要 10⁹ 存储就够了——今天的模型参数量比这个高出好几个数量级。
+
+**它没有解决的问题至今没解决。** 图灵回避了"机器是否真的理解"，理由是这个问题无法操作化。三十年后 Searle 用中文屋直接攻击这个回避（见继续读第一条）。这场争论今天仍在原地：我们能测行为，测不了理解，而两者是否可分离，没有共识。

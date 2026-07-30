@@ -1,0 +1,350 @@
+---
+title: 通信的数学理论逐节拆解
+originalTitle: "A Mathematical Theory of Communication"
+author: C. E. Shannon
+originalYear: 1948
+description: 五十五页纸创造了一门学科，也创造了"比特"这个词。它先把"意义"请出房间，然后证明了一件反直觉的事：不知道对方要说什么，恰恰是能算出该留多少带宽的前提。
+pubDate: 2026-07-31
+field: computing
+tags: ["信息论", "香农", "熵", "压缩", "事实核查"]
+primary:
+  title: "A Mathematical Theory of Communication (PDF)"
+  url: https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf
+  outlet: Bell System Technical Journal
+primaryChecksum: "sha256:6e4e3411984f3edf99dbfe8b941cb5e8a321379ff0cae6ae5c1f592ad8882ca8"
+primaryChecksumNote: >-
+  底本为哈佛镜像的 "Reprinted with corrections" 版 PDF（55 页，366,296 字节）。
+  全文英文引文逐条按此底本校对；PDF 抽取会把跨行连字符（如 approxi-mately）断开，
+  比对前已归一。数学符号在抽取中损坏严重，因此本文只逐字引用散文句，公式一律重排为 KaTeX。
+difficulty:
+  minutes: 55
+  audience: 高中生起。需要的全部数学是"对数"和"概率是 0 到 1 之间的数"。第 6 节起会看到求和号，但每个求和号本文都拆成算术例子重算一遍。
+  hardParts:
+    - 熵的公式 H = -Σ p log p 本身不难算，难的是理解它量的到底是什么：不是"信息有多少"，而是"你事先有多不确定"。这两句话听起来一样，其实差很远。
+    - "定理 9 的陈述里有个 ε（任意小的正数）。这个 ε 是整个定理的重量所在：它说的是'可以无限逼近但达不到'，而不是'可以达到'。"
+    - 香农证明编码存在的方法是概率论的存在性论证——他不给出编码，只证明它必然存在。第一次见这种论证会觉得像作弊。
+    - 信道容量 C 和熵 H 是两个不同的量，单位也不同（比特/秒 vs 比特/符号）。全文最容易混的就是这两个。
+reading:
+  - title: "Prediction and Entropy of Printed English"
+    author: C. E. Shannon
+    note: 香农自己三年后回到英文熵这个问题，用人类猜下一个字母的实验把本文"大约 50%"的估计收紧到每字母 0.6–1.3 比特。想看第 7 节那个数字后来怎么被钉死，读它
+    url: https://doi.org/10.1002/j.1538-7305.1951.tb01366.x
+    level: core
+    relation: downstream
+    concepts: ["entropy", "redundancy"]
+  - title: "Transmission of Information"
+    author: R. V. L. Hartley
+    note: 本文开篇点名的两位前人之一。哈特利已经想到用对数量信息，但他的公式里没有概率——对照读能精确看出香农加了什么
+    url: https://doi.org/10.1002/j.1538-7305.1928.tb01236.x
+    level: core
+    relation: upstream
+    concepts: ["entropy"]
+  - title: "Certain Topics in Telegraph Transmission Theory"
+    author: Harry Nyquist
+    note: 本文点名的另一位前人。奈奎斯特算的是"每秒能塞多少符号"，属于信道的物理侧；香农补上的是信源的统计侧。两者相乘才是完整图景
+    url: https://doi.org/10.1109/5.989875
+    level: deep
+    relation: upstream
+    concepts: []
+  - title: "A Method for the Construction of Minimum-Redundancy Codes"
+    author: David A. Huffman
+    note: 香农证明了最优编码存在却没给构造法；四年后霍夫曼给出一个，还是作为课程作业交的。这是"存在性证明"到"可用算法"的最短距离
+    url: https://doi.org/10.1109/jrproc.1952.273898
+    level: core
+    relation: downstream
+    concepts: ["entropy", "prefix-code"]
+  - title: "The Bandwagon"
+    author: C. E. Shannon
+    note: 香农 1956 年一页纸的公开抱怨：信息论正被滥用到心理学、语言学、经济学里去。作者亲手划的适用边界，是本文最有力的反面材料
+    url: https://doi.org/10.1109/tit.1956.1056774
+    level: intro
+    relation: counter
+    concepts: []
+  - title: "The Mathematical Theory of Communication（1949 单行本）"
+    author: Claude E. Shannon, Warren Weaver
+    note: 单行本前面加了 Weaver 的通俗导言，而那篇导言把香农明确请出房间的"意义"又请了回来。今天大量误读的源头就在这里，值得对照原文看
+    url: https://archive.org/details/mathematicaltheo00shan
+    level: intro
+    relation: counter
+    concepts: []
+---
+
+import Sidenote from '../../components/Sidenote.astro';
+import Check from '../../components/Check.astro';
+import Prereq from '../../components/Prereq.astro';
+
+<Prereq of={["entropy", "bit", "redundancy", "hash-function"]} />
+
+## 读之前：这篇论文的体裁
+
+五十五页，两部分（离散无噪、连续有噪），二十三条定理，七个附录。1948 年 7 月和 10 月分两期发表在《贝尔系统技术杂志》上——注意它不是投给数学期刊的，是贝尔实验室的内部刊物，读者预设是电话工程师。
+
+这个体裁事实解释了全文的写法：香农几乎每引入一个抽象量，就立刻给一个电报或电话的具体例子。它不是在向数学家证明什么，是在向工程师说明"你们每天在算的带宽，其实有一个上限，而这个上限可以算出来"。
+
+也解释了它为什么好读。真正难的部分被推进了附录，正文里的论证多数只需要跟着算术走。
+
+<Sidenote kind="why">
+论文标题是 *A* Mathematical Theory，不定冠词。1949 年出单行本时被改成 *The* Mathematical Theory——一个冠词的改动把"一种理论"变成了"那个理论"。香农本人对此并不舒服，八年后写了《The Bandwagon》抱怨滥用。
+</Sidenote>
+
+## 摘要之前：先把"意义"请出房间
+
+全文最重要的一句话在第一页，而且它不是一个公式：
+
+> The fundamental problem of communication is that of reproducing at one point either exactly or approximately a message selected at another point.
+
+通信的根本问题，是在一处**精确或近似地重现**另一处挑选出的消息。
+
+请注意"挑选"（selected）这个词，它是整篇论文的地基。接着香农做了一件在当时看来近乎冒犯的事：
+
+> Frequently the messages have meaning; that is they refer to or are correlated according to some system with certain physical or conceptual entities. These semantic aspects of communication are irrelevant to the engineering problem.
+
+消息常常有意义，也就是说它们按某种体系指涉某些物理或概念实体。**通信的这些语义面向与工程问题无关。**
+
+这句话是整门学科的入场券。把"意义"请出房间不是因为意义不重要，而是因为留着它就什么都算不出来——"这句话有多少意义"没有单位，而香农要的是能标在电缆上的数字。
+
+那么留下什么？
+
+> The significant aspect is that the actual message is one selected from a set of possible messages.
+
+有意义的面向是：实际发出的消息，是从**一组可能消息**里挑出来的那一个。
+
+这就是全文的转轴。通信系统的设计者不知道用户会说什么，所以他必须为**所有可能被说的话**做准备。于是问题从"这条消息是什么"变成了"可能的消息有多少种、各自多常见"——后者是纯粹的计数与概率问题，可以算。
+
+<Sidenote kind="caution">
+这里最容易读错：香农不是说意义不存在，也不是说意义不重要。他说的是意义与**工程问题**无关。后来大量把信息论套到心理学、文学、经济学上的做法，恰恰是无视了这道边界，气得香农 1956 年专门写文章划界。
+</Sidenote>
+
+<Check q="为什么'通信系统必须为所有可能的消息做准备'这句话，能把通信问题变成一个可计算的问题？">
+因为它把对象从"一条具体消息的含义"（无法量化）换成了"一个消息集合的统计结构"（可以量化：有多少种、概率分布如何）。工程师设计系统时消息尚未产生，能依据的只有分布。一旦对象是分布，就可以谈期望、上限和最优编码。
+</Check>
+
+## 1. 比特这个词，在这一页被造出来
+
+香农要一个信息的单位。他先论证为什么该用对数（可加性：两张打孔卡应当装两倍的信息），然后：
+
+> If the base 2 is used the resulting units may be called binary digits, or more briefly bits, a word suggested by J. W. Tukey.
+
+如果用 2 做底，得到的单位可以叫 binary digits，或更简短地叫 **bits**——这个词是 J. W. Tukey 建议的。
+
+这是"比特"一词在学术文献里的首次露面，而且香农老实地把命名权记在同事 Tukey 名下。紧接着一句给了它物理含义：
+
+> A device with two stable positions, such as a relay or a flip-flop circuit, can store one bit of information.
+
+一个有两个稳定状态的装置——比如继电器或触发器——能存一个比特的信息。
+
+这句话值得停一下。继电器是个啪嗒作响的机械开关，1948 年的读者天天见。香农把最抽象的量（信息）直接锚在最具体的物件（一个能停在两个位置的开关）上。一个开关一个比特，N 个开关 N 个比特，因为总状态数是 2^N 而 log₂2^N = N。
+
+<Sidenote kind="term">
+**比特不是"一个 0 或 1"**，而是"消除一半可能性所需的信息量"。这个区别在后面会变得关键：一个偏斜的硬币（正面 90%）翻一次给你的信息**少于**一比特，尽管结果仍然只用一个 0/1 记录。
+</Sidenote>
+
+<Check q="为什么香农选对数，而不是直接用'可能消息的个数'来度量信息？">
+因为可加性。两个独立系统合起来，可能状态数是**相乘**（M₁ × M₂），而我们直觉上希望容量是**相加**（两张卡片装两倍）。对数正好把乘法变成加法。香农原文给了三条理由，可加性（工程上更有用）是第一条。
+</Check>
+
+## 3. 用 1948 年的手工统计，造一台语言模型
+
+这一节是全文最容易被现代读者低估的部分。香农想说明"语言是有统计结构的"，于是他真的动手生成了几段假英文，逐级增加统计约束。
+
+> To give a visual idea of how this series of processes approaches a language, typical sequences in the approximations to English have been constructed and are given below.
+
+> In all cases we have assumed a 27-symbol "alphabet," the 26 letters and a space.
+
+二十七个符号：二十六个字母加一个空格。然后是他生成的序列，逐级上升。零阶（所有符号等概率、独立）：
+
+```
+XFOML RXKHRJFFJUJ ZLPWCFWKCYJ FFJEYVKCQSGHYD QPAAMKBZAACIBZL-
+HJQD.
+```
+
+一阶（符号独立，但按英文实际频率）：
+
+```
+OCRO HLI RGWR NMIELWIS EU LL NBNESEBYA TH EEI ALHENHTTPA OOBTTVA
+NAH BRL.
+```
+
+二阶（引入双字母组结构）：
+
+```
+ON IE ANTSOUTINYS ARE T INCTORE ST BE S DEAMY ACHIN D ILONASIVE TU-
+COOWE AT TEASONARE FUSO TIZIN ANDY TOBE SEACE CTISBE.
+```
+
+三阶（引入三字母组结构）：
+
+```
+IN NO IST LAT WHEY CRATICT FROURE BIRS GROCID PONDENOME OF DEMONS-
+TURES OF THE REPTAGIN IS REGOACTIONA OF CRE.
+```
+
+然后他跳到词一级。二阶词近似（词的转移概率正确，再无更多结构）：
+
+```
+THE HEAD AND IN FRONTAL ATTACK ON AN ENGLISH WRITER THAT THE CHAR-
+ACTER OF THIS POINT IS THEREFORE ANOTHER METHOD FOR THE LETTERS THAT
+THE TIME OF WHO EVER TOLD THE PROBLEM FOR AN UNEXPECTED.
+```
+
+香农的评语只有一句：
+
+> The resemblance to ordinary English text increases quite noticeably at each of the above steps.
+
+每往上一级，与普通英文的相似度都明显上升。
+
+这是 n-gram 语言模型的原始文档，比"语言模型"这个词的出现早了几十年。今天的大模型在做的事，从形式上看和上面这个阶梯是同一件事：用更长的上下文预测下一个符号。区别只在于阶数和参数量——香农手上是查表统计的三阶，今天是几千亿参数的超长上下文。
+
+值得注意的是最后那句话背后的方法论：香农没有定义"像英文"这件事，他把生成结果摆出来让你自己看。这是一种极其诚实的论证方式。
+
+<Sidenote kind="why">
+这些序列是**手工**做出来的。香农在原文脚注里交代了字母与双字母频率的来源（Fletcher Pratt 的《Secret and Urgent》，1939），词频来自 G. Dewey 1923 年的统计。也就是说他是拿着印刷的频率表，用随机数一个符号一个符号拼出来的。
+</Sidenote>
+
+<Check q="第三阶近似里出现了 DEMONSTURES、REPTAGIN 这样并不存在的词。为什么这反而支持了香农的论点？">
+因为它说明仅靠三字母的局部约束就足以生成"看起来像英文"的形态——词根、词尾、辅音元音交替都对了，只是整词不存在。这正说明语言的相当一部分结构是**局部统计**，不需要语义或语法知识就能捕捉。这也是后来压缩算法能奏效的原因。
+</Check>
+
+## 6. 熵：全文的核心，也是最容易被讲错的地方
+
+香农要一个量，衡量"在消息发出之前，你有多不确定"。他列出三条这个量必须满足的性质（连续、随可能性增加而单调、可分解），然后证明满足这三条的形式**唯一**：
+
+$$
+H = -\sum_{i} p_i \log p_i
+$$
+
+原文的措辞值得逐字看：
+
+> Quantities of the form H = −∑pi log pi (the constant K merely amounts to a choice of a unit of measure) play a central role in information theory as measures of information, choice and uncertainty.
+
+这类量在信息论中作为**信息、选择与不确定性**的度量而处于中心地位。
+
+三个词并列：information、choice、uncertainty。香农把它们当同义词用，这正是理解熵的钥匙——信息量等于不确定性等于选择的余地。三个说法量的是同一件事。
+
+接着他交代了这个名字的来历：
+
+> The form of H will be recognized as that of entropy as defined in certain formulations of statistical mechanics<sup>8</sup> where pi is the probability of a system being in cell i of its phase space.
+
+H 的形式会被认出正是统计力学某些表述中定义的**熵**。
+
+### 手算一遍，两分钟
+
+抽象讨论不如算一次。设一个信源只发四个符号，概率分别是 1/2、1/4、1/8、1/8：
+
+$$
+H = -\left(\tfrac12\log_2\tfrac12 + \tfrac14\log_2\tfrac14 + \tfrac18\log_2\tfrac18 + \tfrac18\log_2\tfrac18\right)
+$$
+
+逐项算：−(1/2)(−1) = 0.5；−(1/4)(−2) = 0.5；−(1/8)(−3) = 0.375，两次共 0.75。加起来 **H = 1.75 比特/符号**。
+
+对比一下：如果这四个符号等概率，H = log₂4 = **2 比特/符号**。所以概率不均本身就降低了熵——这就是压缩的全部空间所在。均匀分布是最难压的，偏斜分布留下余量。
+
+而 1.75 这个数字有个漂亮的实际含义：给这四个符号分配码字 `0`、`10`、`110`、`111`，平均码长恰好是
+
+$$
+\tfrac12(1) + \tfrac14(2) + \tfrac18(3) + \tfrac18(3) = 1.75
+$$
+
+正好等于熵。这不是巧合，是定理 9 说的事。
+
+<Sidenote kind="math">
+为什么概率取 1/2、1/4、1/8 时能做到平均码长恰好等于熵？因为每个概率都是 2 的负整数次幂，此时 −log₂pᵢ 正好是整数，码长可以精确匹配。概率不是 2 的幂时会有零头，平均码长只能逼近熵而无法相等——这就是定理 9 里那个"任意小的 ε"的来源。
+</Sidenote>
+
+<Check q="一枚正面概率 90% 的偏斜硬币，翻一次给你的信息比一枚公平硬币多还是少？">
+少。公平硬币 H = 1 比特；偏斜硬币 H = −(0.9log₂0.9 + 0.1log₂0.1) ≈ 0.47 比特。因为你事先已经相当确定会是正面，结果揭晓时你学到的东西就少。这正是"信息 = 消除的不确定性"这个等式的直接后果——注意结果仍然只需一个 0/1 来记录，但它携带的信息不到半个比特。
+</Check>
+
+## 7. 英文的冗余度：那个著名的 50%
+
+香农把熵用回英文，得到全文最常被引用的数字之一：
+
+> The redundancy of ordinary English, not considering statistical structure over greater distances than about eight letters, is roughly 50%.
+
+普通英文的冗余度——在不考虑超过约八个字母距离的统计结构的前提下——大约是 **50%**。
+
+> This means that when we write English half of what we write is determined by the structure of the language and half is chosen freely.
+
+这意味着我们写英文时，一半内容由语言结构决定，一半是自由选择的。
+
+引用这个数字的人通常漏掉那个限定从句。"不考虑超过约八个字母的结构"是个很重的前提：把更长距离的结构算进来，冗余度会更高。香农自己 1951 年重做这个实验（让人猜下一个字母），把英文熵收紧到每字母 0.6 到 1.3 比特之间，对应的冗余度远高于 50%。
+
+<Sidenote kind="caution">
+所以"英文有 50% 冗余"这句话在今天的转述里几乎总是被说强了。原文说的是 roughly（大约），且带明确的八字母窗口限制，而作者三年后自己就修订了它。引用 1948 年这个数字而不提 1951 年那篇，是选择性引用。
+</Sidenote>
+
+## 9. 定理 9：压缩的极限就是熵
+
+这是"离散无噪信道"部分的顶点。香农先说明他要做什么：
+
+> We will now justify our interpretation of H as the rate of generating information by proving that H determines the channel capacity required with most efficient coding.
+
+我们现在来为把 H 解释成信息产生速率提供依据：证明 H 决定了最高效编码所需的信道容量。
+
+定理的内容用大白话说：一个熵为 H（比特/符号）的信源，配一个容量为 C（比特/秒）的信道，你可以让传输速率任意逼近 C/H 个符号每秒，但**永远无法超过**。
+
+这句话有两面，两面都重要：
+
+- **正面（好消息）**：只要 H 小于 C，就存在编码方式让你几乎无损地传完。压缩的极限存在，而且就是熵。
+- **反面（坏消息）**：C/H 不可超越。任何声称"压缩率没有下限"的说法，都在和这条定理对撞。
+
+<Sidenote kind="why">
+这也解释了为什么"无损压缩任意文件到一半"是不可能的骗局。真随机数据的熵已经达到上限，无冗余可榨。压缩之所以在实践中有效，恰恰因为真实文件（文本、图像、代码）远非随机。
+</Sidenote>
+
+### 证明方式本身才是这篇论文最深的一处
+
+香农怎么证明"存在这样的编码"？他不构造它。
+
+> The method of proving the first part of this theorem is not by exhibiting a coding method having the desired properties, but by showing that such a code must exist in a certain group of codes.
+
+证明第一部分的方法，不是**给出**一个具有所需性质的编码方法，而是证明这样的编码**必然存在**于某一类编码之中。
+
+这是概率论式的存在性论证：他考察所有可能编码的平均表现，证明平均值已经足够好，那么至少有一个个体不差于平均。于是"好编码存在"被证明了，而你手里一个具体的好编码也没有。
+
+第一次遇到这种论证会觉得像作弊。但它是二十世纪数学最强的工具之一（同一手法后来被 Erdős 发展成"概率方法"），而且它精确地划出了理论与工程的分界：香农证明了终点存在，霍夫曼四年后才给出走到那里的路。
+
+<Check q="定理 9 说速率可以'任意逼近' C/H 但达不到。这个'达不到'是工程限制还是数学结论？">
+数学结论。原文用的是"where ε is arbitrarily small"——ε 可以任意小但不能为零。根源在上面手算里看到的那件事：只有当所有概率都恰好是 2 的负整数次幂时码长才能精确匹配熵，否则总有零头。这不是设备不够好，是整数码长与实数熵之间的必然缝隙。
+</Check>
+
+## 11. 定理 11：噪声不是速率的敌人，是可靠性的价格
+
+第二部分处理有噪信道。直觉上你会以为：线路有噪声，就必然有错，只能靠反复重发来降低错误率，而重发会拖慢速率——于是"零错误"和"高速率"是一对不可兼得的东西。
+
+香农证明这个直觉是错的。
+
+> Theorem 11: Let a discrete channel have the capacity C and a discrete source the entropy per second H. If H ≤ C there exists a coding system such that the output of the source can be transmitted over the channel with an arbitrarily small frequency of errors (or an arbitrarily small equivocation). If H > C it is possible to encode the source so that the equivocation is less than H − C + ε where ε is arbitrarily small. There is no method of encoding which gives an equivocation less than H − C.
+
+只要信源熵 H 不超过信道容量 C，就**存在**一种编码，使得错误频率任意小。注意：不是"错误率随速率下降而下降"，而是在**固定的、接近 C 的速率**下，错误率可以压到任意小。
+
+这是全文最反直觉的结论，也是现代通信的全部基础。手机在信号很差时仍能清晰通话、硬盘在物理介质出错时仍能读出正确数据、深空探测器从几十亿公里外传回照片——都建立在这一条上。噪声不再限制**速率**，它只是提高了达到可靠所需的**编码复杂度**。
+
+<Sidenote kind="term">
+**Equivocation（含混度）** 是香农的用词，指收到信号后关于原消息剩余的不确定性，即条件熵 H(x|y)。定理最后一句给了个下界：equivocation 不可能低于 H − C。也就是说信源熵超出信道容量的那部分，是**必然丢失**的，无论编码多聪明。
+</Sidenote>
+
+<Check q="定理 11 说 H ≤ C 时错误率可以任意小。那为什么现实中的通信还是会出错？">
+因为定理保证的是"存在这样的编码"，而不是"你正在用的编码是这样的"。逼近容量的编码往往需要极长的分组长度和巨大的计算量。从 1948 到 1993 年 Turbo 码、再到 LDPC 码被重新发现，工程界花了将近五十年才造出实际逼近香农极限的码。定理划定了终点，走过去要另花半个世纪。
+</Check>
+
+## 附：论文没说，但常被说成它说了的
+
+我按上面那份底本逐词核过，下面每一条都做了 grep 计数。
+
+| 常见说法 | 原文实际情况 |
+| --- | --- |
+| 香农证明了"信息就是负熵" | 原文从未把信息等同于负熵。它说 H 的**形式**与统计力学的熵相同，并把 H 同时称为 information、choice、uncertainty 三者的度量 |
+| 论文提出了"信息熵"这个术语 | 原文只说 entropy，从不写 "information entropy"。中文"信息熵"是后起的合成词 |
+| 比特是香农造的词 | 原文明确写 "a word suggested by J. W. Tukey"，香农把命名权记给了同事（Tukey 即后来 FFT 的共同作者） |
+| 论文讨论了信息的意义/价值 | 恰恰相反，第一页就把语义面向排除出工程问题（irrelevant to the engineering problem） |
+| 英文冗余度是 50%（无条件） | 原文是 roughly 50%，且带"不考虑超过约八个字母距离的统计结构"这一限定；香农 1951 年自己把英文熵修订到 0.6–1.3 比特/字母 |
+| 论文给出了压缩算法 | 没有。定理 9 只证明最优编码**存在**，明确说不是通过 exhibiting 一个方法。霍夫曼编码是 1952 年的事 |
+| 论文标题是《The Mathematical Theory of Communication》 | 1948 年原文是 *A* Mathematical Theory，不定冠词。改成 The 是 1949 年单行本的事 |
+| 论文只讲离散情形 | 全文分两部分，后半专门处理连续信号与高斯噪声。定理 17 给出带宽 W、噪声功率 N、发射功率限制 P 下的容量 C = W log((P+N)/N)，即今天写成 W log(1 + S/N) 的那条公式 |
+
+## 为什么这篇值得当地基读
+
+它把一个哲学上无解的问题（什么是信息）换成了一个工程上可解的问题（一个消息集合的统计结构如何），然后证明这个替换足以回答所有实际问题。这个动作——**用可测量的替代品换掉无法测量的原问题**，并且诚实地声明自己换掉了什么——是我见过的最好的一次科学建模示范。
+
+而它的直接后代覆盖了今天几乎所有的技术栈：压缩（zip、JPEG）、纠错（硬盘、5G、深空通信）、密码学（熵作为密钥强度的度量）、机器学习（交叉熵损失、困惑度就是熵的指数）。你现在读到这行字，从服务器到屏幕的每一段路都在用这篇论文的结论。
