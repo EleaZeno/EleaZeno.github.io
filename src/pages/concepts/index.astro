@@ -1,0 +1,56 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getConcepts, conceptGraph, LEVEL_LABELS } from '../../lib/wiki';
+import { DOMAIN_LABELS } from '../../lib/posts';
+import { url } from '../../lib/url';
+
+const concepts = await getConcepts();
+const graph = await conceptGraph();
+
+// Group by domain so the glossary reads as a map, not an alphabet soup.
+const byDomain = new Map<string, typeof concepts>();
+for (const c of concepts) {
+  const list = byDomain.get(c.data.domain) ?? [];
+  list.push(c);
+  byDomain.set(c.data.domain, list);
+}
+const groups = [...byDomain.entries()].sort((a, b) => b[1].length - a[1].length);
+---
+
+<Base title="词条" description="站内术语的解释与索引。每篇文章里的术语都链接到这里。" section="concepts">
+  <header class="page">
+    <p class="kicker">词条索引</p>
+    <h1>词条</h1>
+    <p class="standfirst">
+      文章里出现的术语都会自动链接到这里。每条先给一句人话，再讲机制和代价。
+      共 {concepts.length} 条。
+    </p>
+  </header>
+
+  {concepts.length === 0 ? (
+    <p class="empty">还没有词条。</p>
+  ) : (
+    groups.map(([domain, list]) => (
+      <section class="concept-group">
+        <h2>{DOMAIN_LABELS[domain] ?? domain}</h2>
+        <dl class="glossary">
+          {list.map((c) => (
+            <div class="glossary-item">
+              <dt>
+                <a href={url('concepts/' + c.id)}>{c.data.title}</a>
+                <span class="muted mono lvl">{LEVEL_LABELS[c.data.level]}</span>
+              </dt>
+              <dd>
+                {c.data.oneLiner}
+                {(() => {
+                  const n = graph.get(c.id)?.mentionedBy.length ?? 0;
+                  return n > 0 ? <span class="muted mono refs"> {n} 篇引用</span> : null;
+                })()}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    ))
+  )}
+</Base>

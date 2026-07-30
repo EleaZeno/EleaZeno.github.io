@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeWikilink from './src/lib/rehype-wikilink.mjs';
 
 // User site: https://eleazeno.github.io lives at the root, so BASE_PATH is '/'.
 // Both are still env-driven so the same tree can be built as a project site
@@ -20,7 +21,11 @@ export default defineConfig({
     remarkPlugins: [remarkMath],
     // KaTeX renders to MathML + styled HTML at build time: no client-side JS,
     // no layout shift, and it still degrades to readable MathML if CSS fails.
-    rehypePlugins: [[rehypeKatex, { output: 'htmlAndMathml', throwOnError: false }]],
+    rehypePlugins: [
+      [rehypeKatex, { output: 'htmlAndMathml', throwOnError: false }],
+      // After KaTeX so math nodes are already built and get skipped.
+      [rehypeWikilink, { base: BASE_PATH }],
+    ],
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark-dimmed' },
       wrap: true,

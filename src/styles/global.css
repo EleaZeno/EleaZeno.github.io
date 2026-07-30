@@ -823,3 +823,91 @@ ul.plain li {
 @media (prefers-reduced-motion: reduce) {
   .field { display: none; }
 }
+
+/* ---------- wiki: inline term links ---------- */
+
+/* Dotted underline marks a definition link, distinct from a citation. */
+.wikilink {
+  border-bottom: 1px dashed var(--accent);
+  color: inherit;
+  cursor: help;
+}
+
+.wikilink:hover {
+  color: var(--accent);
+  background: var(--accent-wash);
+  border-bottom-style: solid;
+}
+
+/* ---------- wiki: concept page ---------- */
+
+.concept .aliases {
+  font-size: 0.76rem;
+  margin: 0.5rem 0 0;
+}
+
+.backlinks {
+  margin-top: 3rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--rule);
+}
+
+.backlinks h2 {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 0.8rem;
+  font-weight: 400;
+}
+
+.backlinks ul { margin: 0; padding-left: 1.1rem; }
+.backlinks li { margin: 0.3rem 0; font-size: 0.94rem; }
+
+/* ---------- wiki: glossary index ---------- */
+
+.concept-group { margin-bottom: 3rem; }
+
+.concept-group h2 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+  margin: 0 0 1.2rem;
+  font-weight: 400;
+}
+
+.glossary { margin: 0; }
+
+.glossary-item {
+  display: grid;
+  grid-template-columns: 13rem 1fr;
+  gap: 1.5rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.glossary-item dt {
+  font-family: var(--serif);
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.glossary-item dd {
+  margin: 0;
+  color: var(--fg-dim);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.lvl, .refs { font-size: 0.66rem; letter-spacing: 0.08em; }
+
+@media (width <= 48rem) {
+  .glossary-item { grid-template-columns: 1fr; gap: 0.3rem; }
+}

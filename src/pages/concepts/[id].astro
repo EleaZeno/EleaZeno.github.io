@@ -1,0 +1,95 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Stamp from '../../components/Stamp.astro';
+import { getConcepts, conceptGraph, LEVEL_LABELS } from '../../lib/wiki';
+import { DOMAIN_LABELS, formatDate } from '../../lib/posts';
+import { url, postUrl } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const concepts = await getConcepts();
+  const graph = await conceptGraph();
+  return concepts.map((c) => ({
+    params: { id: c.id },
+    props: { concept: c, node: graph.get(c.id) },
+  }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { concept, node } = Astro.props as Props;
+const { Content } = await render(concept);
+const d = concept.data;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'DefinedTerm',
+  name: d.title,
+  description: d.oneLiner,
+  inDefinedTermSet: new URL(url('concepts'), Astro.site).toString(),
+};
+---
+
+<Base title={d.title} description={d.oneLiner} section="concepts">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+  <div class="layout">
+    <article class="article concept">
+      <header class="article-head">
+        <p class="kicker">词条 · {DOMAIN_LABELS[d.domain] ?? d.domain} · {LEVEL_LABELS[d.level]}</p>
+        <h1>{d.title}</h1>
+        <p class="standfirst">{d.oneLiner}</p>
+        {d.aliases.length > 0 && (
+          <p class="muted mono aliases">也称：{d.aliases.join('、')}</p>
+        )}
+      </header>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {d.sources.length > 0 && (
+        <section class="sources">
+          <h2>来源</h2>
+          <ol>
+            {d.sources.map((s: { title: string; url: string; outlet?: string }) => (
+              <li>
+                <a href={s.url} rel="nofollow noopener" target="_blank">{s.title}</a>
+                {s.outlet && <span class="muted"> · {s.outlet}</span>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {node && node.mentionedBy.length > 0 && (
+        <section class="backlinks">
+          <h2>提到这个词条的文章</h2>
+          <ul>
+            {node.mentionedBy.map((p) => (
+              <li>
+                <a href={postUrl(p.id)}>{p.data.title}</a>
+                <span class="muted mono"> {formatDate(p.data.pubDate)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </article>
+
+    <div class="rail-stack">
+      {node && node.related.length > 0 && (
+        <nav class="rail" aria-label="相关词条">
+          <p class="rail-label">相关词条</p>
+          <ul class="rail-list">
+            {node.related.map((r) => (
+              <li>
+                <a href={url('concepts/' + r.id)}>{r.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
+      <Stamp seed={concept.id} />
+    </div>
+  </div>
+</Base>

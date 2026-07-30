@@ -50,4 +50,30 @@ const dreams = defineCollection({
   }),
 });
 
-export const collections = { posts, dreams };
+/**
+ * Concept pages: the wiki layer.
+ *
+ * Every technical term an article leans on gets one page here, written so a
+ * non-specialist can follow it. Articles then link to the definition instead
+ * of re-explaining it, which is what makes the terms compound over time.
+ */
+const concepts = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/concepts' }),
+  schema: z.object({
+    title: z.string().min(1),
+    /** Other spellings that should also auto-link here (EN/CN, abbreviations). */
+    aliases: z.array(z.string()).default([]),
+    /** One plain sentence, no jargon. Shown on hover and in the glossary. */
+    oneLiner: z.string().min(1),
+    domain: z
+      .enum(['ai', 'crypto', 'physics', 'bio', 'space', 'energy', 'compute', 'systems', 'theory', 'other'])
+      .default('ai'),
+    /** Rough difficulty, so the glossary can offer an easy path in. */
+    level: z.enum(['intro', 'core', 'deep']).default('core'),
+    related: z.array(z.string()).default([]),
+    sources: z.array(source).default([]),
+    updatedDate: z.coerce.date().optional(),
+  }),
+});
+
+export const collections = { posts, dreams, concepts };

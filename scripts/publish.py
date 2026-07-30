@@ -72,6 +72,14 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(chr(10) + 'refusing to publish: fix the titles above' + chr(10))
         return 3
 
+    # Wiki gate: dangling refs / orphan terms / jargon-first definitions.
+    wiki = subprocess.run([sys.executable, 'scripts/check_wiki.py'],
+                          capture_output=True, text=True, cwd=str(REPO))
+    if wiki.returncode != 0:
+        sys.stderr.write(wiki.stdout or wiki.stderr)
+        sys.stderr.write(chr(10) + 'refusing to publish: fix the wiki issues above' + chr(10))
+        return 4
+
     token = load_token()
     push_url = f"https://x-access-token:{token}@{PROXY.split('://', 1)[1]}/{SLUG}.git"
     read_url = f"{PROXY}/{SLUG}.git"
