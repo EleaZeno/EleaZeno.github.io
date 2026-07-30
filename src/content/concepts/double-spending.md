@@ -4,6 +4,7 @@ aliases: ["双花", "双重支付", "double-spending", "double spend"]
 oneLiner: "同一笔电子货币被花两次——数字文件天生可复制，这是电子现金最根本的难题。"
 domain: crypto
 level: intro
+prerequisites: ["block", "node"]
 related: ["public-key-cryptography", "proof-of-work"]
 sources: []
 ---

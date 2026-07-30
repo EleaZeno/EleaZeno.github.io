@@ -4,6 +4,7 @@ aliases: ["Merkle", "默克尔树", "Merkle tree", "Merkle root", "哈希树"]
 oneLiner: "把一批数据两两哈希、层层向上收成一个根指纹；验证其中任何一条只需要一条极短的路径。"
 domain: crypto
 level: core
+prerequisites: ["hash-function"]
 related: ["hash-function"]
 sources: []
 ---

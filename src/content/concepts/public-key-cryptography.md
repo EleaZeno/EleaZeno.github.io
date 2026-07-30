@@ -4,6 +4,7 @@ aliases: ["公钥", "私钥", "数字签名", "公钥密码", "签名", "public 
 oneLiner: "一对钥匙：私钥只有你有、用来签名；公钥人人可见、用来验证签名确实出自你手。"
 domain: crypto
 level: intro
+prerequisites: ["key-pair"]
 related: ["hash-function"]
 sources: []
 ---

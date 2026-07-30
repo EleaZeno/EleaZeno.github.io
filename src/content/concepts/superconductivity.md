@@ -4,6 +4,7 @@ aliases: ["superconductivity", "superconductor", "超导体", "超导态"]
 oneLiner: "某些材料冷到一定温度以下，电阻会突然完全消失，电流可以永远流动不衰减。"
 domain: physics
 level: intro
+prerequisites: []
 related: ["critical-temperature"]
 sources: []
 ---

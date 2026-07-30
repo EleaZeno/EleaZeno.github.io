@@ -61,6 +61,46 @@ const LEVEL_LABELS: Record<string, string> = {
   deep: '深入',
 };
 
+/*
+ * Further reading, grouped by how each item stands to the primary text.
+ *
+ * The order is the argument: what the text was built on, what answers the same
+ * question differently, what it became, and finally what disputes it. Rendering
+ * `counter` last and never hiding the bucket is deliberate -- a deconstruction
+ * that only cites agreement is advocacy, so the absence of dissent should be
+ * visible on the page rather than quietly absent from it.
+ */
+type ReadingItem = {
+  title: string;
+  author?: string;
+  note: string;
+  url?: string;
+  level: string;
+  relation: string;
+  concepts: string[];
+};
+
+const RELATION_ORDER = ['upstream', 'parallel', 'downstream', 'counter'] as const;
+
+const RELATION_LABELS: Record<string, { label: string; hint: string }> = {
+  upstream: { label: '上游', hint: '这篇论文站在谁的肩膀上' },
+  parallel: { label: '平行', hint: '同一个问题的另一种答卷' },
+  downstream: { label: '下游', hint: '这个想法后来变成了什么' },
+  counter: { label: '反面', hint: '质疑或限制原文结论的材料' },
+};
+
+const readingGroups = RELATION_ORDER.map((rel) => ({
+  rel,
+  ...RELATION_LABELS[rel],
+  items: (d.reading as ReadingItem[]).filter((r) => r.relation === rel),
+})).filter((g) => g.items.length > 0);
+
+// Resolve inward links so further reading is a junction, not an exit.
+const conceptLink = (id: string) => {
+  const c = byId.get(id);
+  return c ? { id, title: c.data.title, href: url(`concepts/${id}`) } : null;
+};
+
 const FIELD_LABELS: Record<string, string> = {
   crypto: '密码学与分布式',
   philosophy: '哲学',
@@ -91,6 +131,7 @@ const jsonLd = {
 <Base title={d.title} description={d.description} type="article" section="classics">
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
+  <!-- Reserve the margin only when the entry actually renders sidenotes. -->
   <div class:list={['layout', marginNotes && 'has-margin-notes']}>
     <article class="article">
       <header class="article-head">
@@ -135,7 +176,7 @@ const jsonLd = {
 
         {
           d.tags.length > 0 && (
-            <ul class="tags" style="margin:1.25rem 0 0">
+            <ul class="tags tags-trail">
               {d.tags.map((t) => (
                 <li>
                   <a class="tag" href={tagUrl(t)}>{t}</a>
@@ -155,6 +196,19 @@ const jsonLd = {
         </p>
         <p class="gate-line">
           <strong>适合谁读：</strong>{d.difficulty.audience}
+        </p>
+        {/*
+          Quoted primary text is left as unbroken, selectable English so any
+          pop-up dictionary works on it. We deliberately do not ship our own
+          word-level dictionary: general dictionaries are a solved commodity,
+          while the site's own value is the term pages. Saying so here tells the
+          reader where the boundary is instead of leaving them to discover it.
+        */}
+        <p class="gate-line gate-dict">
+          <strong>英文原文怎么查词：</strong>引文块保持整段可选中，任何划词翻译工具都能直接用
+          （iOS Safari 长按选词后选「查询」，桌面端可用沙拉查词一类扩展）。
+          本站只解释<strong>术语</strong>——像 proof-of-work、Merkle root 这种通用词典给不出
+          本文特定含义的词，会链到站内词条；普通生词交给你自己的词典更靠得住。
         </p>
         {d.difficulty.hardParts.length > 0 && (
           <div class="gate-hard">
@@ -198,23 +252,46 @@ const jsonLd = {
         d.reading.length > 0 && (
           <section class="reading">
             <h2 id="继续读">继续读什么</h2>
-            <p class="reading-intro">由浅入深排列。前置知识里站内还没覆盖的部分，先从这里补。</p>
-            <ol>
-              {d.reading.map((r: { title: string; author?: string; note: string; url?: string; level: string }) => (
-                <li>
-                  <p class="reading-head">
-                    {r.url ? (
-                      <a href={r.url} rel="nofollow noopener" target="_blank">{r.title}</a>
-                    ) : (
-                      <span class="reading-title">{r.title}</span>
-                    )}
-                    {r.author && <span class="reading-author">{r.author}</span>}
-                    <span class="mono lvl">{LEVEL_LABELS[r.level] ?? r.level}</span>
-                  </p>
-                  <p class="reading-note">{r.note}</p>
-                </li>
-              ))}
-            </ol>
+            <p class="reading-intro">
+              按与原文的关系分组，每组内由浅入深。每条都说明为什么值得读——书单不给理由就只是摆设。
+            </p>
+            {readingGroups.map((g) => (
+              <div class="reading-group">
+                <h3 class="reading-rel">
+                  {g.label}
+                  <span class="reading-rel-hint">{g.hint}</span>
+                </h3>
+                <ol>
+                  {g.items.map((r) => (
+                    <li>
+                      <p class="reading-head">
+                        {r.url ? (
+                          <a href={r.url} rel="nofollow noopener" target="_blank">{r.title}</a>
+                        ) : (
+                          <span class="reading-title">{r.title}</span>
+                        )}
+                        {r.author && <span class="reading-author">{r.author}</span>}
+                        <span class="mono lvl">{LEVEL_LABELS[r.level] ?? r.level}</span>
+                      </p>
+                      <p class="reading-note">{r.note}</p>
+                      {r.concepts.length > 0 && (
+                        <p class="reading-concepts">
+                          <span class="reading-concepts-label">站内词条</span>
+                          {r.concepts.map((id) => {
+                            const c = conceptLink(id);
+                            return c ? (
+                              <a class="reading-concept" href={c.href}>{c.title}</a>
+                            ) : (
+                              <span class="reading-concept missing">{id}</span>
+                            );
+                          })}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
           </section>
         )
       }

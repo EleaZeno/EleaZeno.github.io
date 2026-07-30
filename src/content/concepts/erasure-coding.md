@@ -4,6 +4,7 @@ aliases: ["erasure code", "erasure coding", "里德-所罗门码", "Reed-Solomon
 oneLiner: "把数据拆成多份并加上冗余，丢掉一部分也能把原数据完整还原出来。"
 domain: theory
 level: core
+prerequisites: ["redundancy"]
 related: ["data-availability-sampling"]
 sources: []
 ---
