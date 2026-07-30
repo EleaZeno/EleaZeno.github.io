@@ -1,31 +1,37 @@
 ---
-import type { GetStaticPaths } from 'astro';
+import type { InferGetStaticPropsType } from 'astro';
 import Base from '../../layouts/Base.astro';
-import PostCard from '../../components/PostCard.astro';
+import Entry from '../../components/Entry.astro';
 import { getPublishedPosts, tagCounts } from '../../lib/posts';
 import { tagSlug } from '../../lib/url';
 
-export const getStaticPaths = (async () => {
+export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  // Route on the slug, not the raw tag: raw tags can contain spaces, which
-  // would emit directories like `/tags/kv cache/` and break links.
-  return tagCounts(posts).map(([tag]) => ({
-    params: { tag: tagSlug(tag) },
-    props: { tag, posts: posts.filter((post) => post.data.tags.includes(tag)) },
+  // Group by slug so tags differing only in case/spacing share one page.
+  const bySlug = new Map<string, { label: string; posts: typeof posts }>();
+  for (const [tag] of tagCounts(posts)) {
+    const slug = tagSlug(tag);
+    const hit = posts.filter((p) => p.data.tags.some((t) => tagSlug(t) === slug));
+    if (!bySlug.has(slug)) bySlug.set(slug, { label: tag, posts: hit });
+  }
+  return [...bySlug.entries()].map(([slug, { label, posts: hit }]) => ({
+    params: { tag: slug },
+    props: { label, posts: hit },
   }));
-}) satisfies GetStaticPaths;
+};
 
-const { tag, posts } = Astro.props;
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { label, posts } = Astro.props as Props;
 ---
 
-<Base title={`标签: ${tag}`} description={`标签 ${tag} 下的全部文章。`}>
-  <h1>标签: {tag}</h1>
-  <p class="meta">{posts.length} 篇</p>
-  <ul class="post-list">
-    {posts.map((post) => (
-      <li>
-        <PostCard post={post} />
-      </li>
-    ))}
-  </ul>
+<Base title={`标签：${label}`} description={`与 ${label} 相关的文章。`} section="archive">
+  <div class="page" style="max-width:100%">
+    <p class="kicker">标签</p>
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0 0 2.5rem">
+      {label} <span class="muted mono" style="font-size:0.8rem">{posts.length}</span>
+    </h1>
+    <div class="feed">
+      {posts.map((post) => <Entry post={post} as="h3" />)}
+    </div>
+  </div>
 </Base>

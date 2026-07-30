@@ -1,39 +1,96 @@
 ---
-import type { GetStaticPaths } from 'astro';
+import type { InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
+import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
-import { formatDate, getPublishedPosts } from '../../lib/posts';
-import { tagUrl } from '../../lib/url';
+import { formatDate, getPublishedPosts, readingMinutes, DOMAIN_LABELS } from '../../lib/posts';
+import { tagUrl, hostOf } from '../../lib/url';
 
-export const getStaticPaths = (async () => {
+export const getStaticPaths = async () => {
   const posts = await getPublishedPosts();
   return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
-}) satisfies GetStaticPaths;
+};
 
-const { post } = Astro.props;
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { post } = Astro.props as Props;
 const { Content } = await render(post);
+const mins = readingMinutes(post.body ?? '');
+
+const CONFIDENCE: Record<string, string> = {
+  high: '结论稳定',
+  medium: '基本可靠',
+  exploratory: '仍在变动',
+};
+
+// `take` is authored as markdown in frontmatter; render it to HTML here so the
+// commentary block supports links and emphasis like the body does.
+const takeHtml = post.data.take ? await marked.parse(post.data.take) : '';
 ---
 
-<Base title={post.data.title} description={post.data.description} type="article">
-  <article>
-    <h1>{post.data.title}</h1>
-    <div class="meta">
-      <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-      {
-        post.data.updatedDate && (
-          <span>更新于 <time datetime={post.data.updatedDate.toISOString()}>{formatDate(post.data.updatedDate)}</time></span>
-        )
-      }
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  section="home"
+>
+  <article class="article">
+    <header class="article-head">
+      <h1>{post.data.title}</h1>
+      <p class="standfirst">{post.data.description}</p>
+      <div class="byline">
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+        <span class="sep">/</span>
+        <span>{DOMAIN_LABELS[post.data.domain] ?? post.data.domain}</span>
+        <span class="sep">/</span>
+        <span>{mins} 分钟</span>
+        <span class="sep">/</span>
+        <span>{CONFIDENCE[post.data.confidence]}</span>
+        {post.data.generatedBy && (
+          <>
+            <span class="sep">/</span>
+            <span>{post.data.generatedBy}</span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <div class="prose">
+      <Content />
     </div>
+
+    {
+      takeHtml && (
+        <aside class="take">
+          <p class="take-label">我的看法</p>
+          <div class="prose" set:html={takeHtml} />
+        </aside>
+      )
+    }
+
+    {
+      post.data.sources.length > 0 && (
+        <section class="sources">
+          <h2>来源</h2>
+          <ol>
+            {post.data.sources.map((s: { title: string; url: string; outlet?: string }) => (
+              <li>
+                <a href={s.url} rel="nofollow noopener external" target="_blank">{s.title}</a>
+                <span class="host"> · {s.outlet ?? hostOf(s.url)}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
     {
       post.data.tags.length > 0 && (
-        <ul class="tags" aria-label="标签">
-          {post.data.tags.map((tag) => (
-            <li><a href={tagUrl(tag)}>{tag}</a></li>
+        <ul class="tags" style="margin-top:2.5rem">
+          {post.data.tags.map((t: string) => (
+            <li><a class="tag" href={tagUrl(t)}>{t}</a></li>
           ))}
         </ul>
       )
     }
-    <Content />
   </article>
 </Base>

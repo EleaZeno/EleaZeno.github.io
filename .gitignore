@@ -7,3 +7,7 @@ dist/
 __pycache__/
 *.pyc
 .venv/
+
+# Reader-model SQLite lives on the persistent volume, not in git: the daily job
+# mutates it every run, and committing it would collide on every push.
+.data/

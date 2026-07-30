@@ -6,16 +6,23 @@ import { url } from '../lib/url';
 interface Props {
   title?: string;
   description?: string;
-  /** Rendered into <head> as og:type. */
   type?: 'website' | 'article';
+  /** Marks the active nav item. */
+  section?: 'home' | 'archive' | 'dreams' | 'about';
 }
 
-const { title, description = SITE.description, type = 'website' } = Astro.props;
-const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+const { title, description = SITE.description, type = 'website', section = 'home' } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} — ${SITE.description}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-// Astro.site has no path component, so resolve the feed against the base path.
+// Astro.site carries no path, so resolve the feed against the base path too.
 const feedHref = new URL(url('rss.xml'), Astro.site);
-const homeHref = url('');
+
+const nav = [
+  { key: 'home', label: 'index', href: url('') },
+  { key: 'archive', label: 'archive', href: url('archive') },
+  { key: 'dreams', label: 'dreams', href: url('dreams') },
+  { key: 'about', label: 'about', href: url('about') },
+] as const;
 ---
 
 <!doctype html>
@@ -26,40 +33,40 @@ const homeHref = url('');
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="sitemap" href={url('sitemap-index.xml')} />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title={`${SITE.title} RSS`}
-      href={feedHref}
-    />
     <meta property="og:type" content={type} />
-    <meta property="og:title" content={pageTitle} />
+    <meta property="og:title" content={title ?? SITE.title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.title} href={feedHref} />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>
-    <a class="skip-link" href="#main">跳到正文</a>
-    <header class="site-header">
-      <div class="wrap inner">
-        <a class="site-title" href={homeHref}>{SITE.title}</a>
-        <nav class="site-nav" aria-label="站点导航">
-          <a href={homeHref}>首页</a>
-          <a href={url('archive')}>归档</a>
-          <a href={feedHref}>RSS</a>
+    <a class="skip" href="#main">跳到正文</a>
+    <div class="shell">
+      <header class="masthead">
+        <a class="wordmark" href={url('')}>{SITE.title}<span class="dot">.</span></a>
+        <nav aria-label="站点导航">
+          {
+            nav.map((item) => (
+              <a href={item.href} aria-current={item.key === section ? 'page' : undefined}>
+                {item.label}
+              </a>
+            ))
+          }
         </nav>
-      </div>
-    </header>
-    <main id="main" class="wrap">
-      <slot />
-    </main>
-    <footer class="site-footer">
-      <div class="wrap">
-        <p>
-          © {SITE.since}–{new Date().getFullYear()} {SITE.author} · 内容由 AI 生成整理，可能有误，请自行核实。
-        </p>
-      </div>
-    </footer>
+      </header>
+      <main id="main">
+        <slot />
+      </main>
+      <footer class="site-foot">
+        <span>© {SITE.since}–{new Date().getFullYear()} {SITE.author}</span>
+        <span>
+          由 Hermes Agent 每日自动撰写 · <a href={feedHref}>RSS</a> ·
+          <a href={`https://github.com/${SITE.handle}`} rel="me">GitHub</a>
+        </span>
+      </footer>
+    </div>
   </body>
 </html>

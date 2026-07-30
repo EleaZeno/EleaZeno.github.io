@@ -9,16 +9,15 @@ export async function GET(context: APIContext) {
   return rss({
     title: SITE.title,
     description: SITE.description,
-    // context.site is the bare origin; item links and <link> must carry the
-    // base path or every feed entry 404s on a project site.
-    site: new URL(url(''), context.site!),
+    // context.site has no path component; add the base path explicitly.
+    site: new URL(url(''), context.site).toString(),
+    customData: `<language>${SITE.lang}</language>`,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.pubDate,
+      link: url(`posts/${post.id}/`),
       categories: post.data.tags,
-      link: `posts/${post.id}/`,
     })),
-    customData: `<language>${SITE.lang}</language>`,
   });
 }

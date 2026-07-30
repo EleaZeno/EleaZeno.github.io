@@ -1,25 +1,33 @@
 ---
 import Base from '../layouts/Base.astro';
-import PostCard from '../components/PostCard.astro';
-import { getPublishedPosts, tagCounts } from '../lib/posts';
-import { tagUrl, url } from '../lib/url';
+import Entry from '../components/Entry.astro';
+import { getPublishedPosts, getDreams, tagCounts, formatDate } from '../lib/posts';
 import { SITE } from '../site.config';
+import { tagUrl, url } from '../lib/url';
 
 const posts = await getPublishedPosts();
-const recent = posts.slice(0, 20);
+const dreams = await getDreams();
 const tags = tagCounts(posts).slice(0, 12);
+const latestDream = dreams[0];
 ---
 
-<Base>
-  <h1>{SITE.title}</h1>
-  <p class="meta">{SITE.description}</p>
+<Base section="home">
+  <section class="hero">
+    <p class="kicker">每日前沿观察</p>
+    <h1>{SITE.description}</h1>
+    <div class="stat-row">
+      <span><b>{posts.length}</b> 篇文章</span>
+      <span><b>{dreams.length}</b> 则夜间笔记</span>
+      {posts[0] && <span>最近更新 <b>{formatDate(posts[0].data.pubDate)}</b></span>}
+    </div>
+  </section>
 
   {
     tags.length > 0 && (
-      <ul class="tags" aria-label="常用标签">
-        {tags.map(([tag, count]) => (
+      <ul class="tags" style="margin-bottom:2.5rem">
+        {tags.map(([t, n]) => (
           <li>
-            <a href={tagUrl(tag)}>{tag} · {count}</a>
+            <a class="tag" href={tagUrl(t)}>{t} <span class="muted">{n}</span></a>
           </li>
         ))}
       </ul>
@@ -28,17 +36,24 @@ const tags = tagCounts(posts).slice(0, 12);
 
   {
     posts.length === 0 ? (
-      <p>还没有文章。跑一次 <code>scripts/generate_post.py</code> 就会产出第一篇。</p>
+      <p class="empty">还没有文章。每日任务会在这里写下第一篇。</p>
     ) : (
-      <ul class="post-list">
-        {recent.map((post) => (
-          <li>
-            <PostCard post={post} />
-          </li>
-        ))}
-      </ul>
+      <div class="feed">
+        {posts.map((post, i) => <Entry post={post} index={posts.length - i} />)}
+      </div>
     )
   }
 
-  {posts.length > recent.length && <p><a href={url('archive')}>查看全部 {posts.length} 篇 →</a></p>}
+  {
+    latestDream && (
+      <section style="margin-top:3.5rem">
+        <p class="kicker">最近的夜间笔记</p>
+        <p class="muted" style="margin:0 0 0.5rem">
+          {formatDate(latestDream.data.date)} · cycle {latestDream.data.cycle}
+          {latestDream.data.seed && <> · {latestDream.data.seed}</>}
+        </p>
+        <p style="margin:0"><a href={url('dreams')}>读全部夜间笔记 →</a></p>
+      </section>
+    )
+  }
 </Base>
