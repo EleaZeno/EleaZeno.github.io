@@ -96,7 +96,11 @@ def fetch(url: str) -> tuple[int, bytes, str]:
             # A real HTTP answer: no point retrying a 404.
             return e.code, b"", ""
         except Exception as e:  # noqa: BLE001 - transport failures are retried
-            last = type(e).__name__
+            # Keep the errno/reason, not just the class name: ConnectionResetError
+            # (RST injection / SNI filtering) and a plain timeout both surface as
+            # transport failures but mean completely different things, and the
+            # difference is what tells a reader whether the origin is at fault.
+            last = f"{type(e).__name__}: {e}"[:120]
     return 0, b"", last
 
 

@@ -62,6 +62,29 @@ npm run build && npm run gate:live      # 全量探 dist/ 里的每条路由
 python3 scripts/check_live.py --sample 12   # 只抽样，快
 ```
 
+用户报「打不开」时，先分清是**站点坏了**还是**路径被挡**——两者的修法完全不同：
+
+```bash
+npm run diagnose          # 分层定位：DNS → TCP → TLS → HTTP → 内容
+```
+
+`scripts/diagnose_access.py` 按浏览器的顺序逐层探，第一个 FAIL 就是答案。判据：
+
+- **TCP 层 RESET**（端口本来开着）或 **TLS ClientHello 后 RESET** = SNI 被过滤，
+  站点侧无法修复。此时 origin 的所有检查都会是绿的，别再重复跑 `gate:live`。
+- **TLS 层证书不覆盖** = URL 形式错了。`*.github.io` 通配证书**不覆盖**二级子域，
+  所以 `www.eleazeno.github.io` 必然 SSL 失败，看起来像网站挂了。
+- **HTTP 404 在首页** = Pages 没有为这个名字发布内容（通配 DNS 下的拼写错误）。
+- **全部 PASS** = 站点是活的，问题在对方那条路上。
+
+它对 IPv6 探测失败**不**判故障：本机没有 v6 出口时那条 FAIL 属于探测器自身的
+局限，会单独标注而不抢占 verdict。
+
+一个反复踩到的坑：这台机器默认走公司代理（`https_proxy=sg-squid-test…`），
+代理能通不代表直连能通。下结论前用 `env -u https_proxy -u http_proxy …` 或
+`curl --noproxy '*'` 复测一次，否则「服务端没问题」这个判断的证据基础是假的。
+
+
 它断言三件事：`dist/` 里的每条路由线上都不是 404、线上引用的 CSS 包哈希与本地构建一致
 （不一致说明部署的不是当前代码）、首页拿得到且非空。曾经的真实故障形态是**首页 200
 但新路由全 404**——因为文件写好了从没提交，CI 也就从没跑过。只看首页会漏掉。
