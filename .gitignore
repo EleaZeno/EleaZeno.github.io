@@ -11,3 +11,5 @@ __pycache__/
 # Reader-model SQLite lives on the persistent volume, not in git: the daily job
 # mutates it every run, and committing it would collide on every push.
 .data/
+# Stray build artifacts: wheels get downloaded here during tooling installs.
+*.whl

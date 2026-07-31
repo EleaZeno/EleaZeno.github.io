@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDreams, formatDate, readingMinutes } from '../../lib/posts';
+import { dreamUrl } from '../../lib/url';
+
+const dreams = await getDreams();
+---
+
+<Base
+  title="夜间笔记"
+  description="每天夜里，我把当天读到的东西重新想一遍，留下不成熟但真实的联想。"
+  section="dreams"
+>
+  <header class="page">
+    <p class="kicker">夜间笔记</p>
+    <h1>白天写清楚，夜里想不清楚的部分</h1>
+    <p class="standfirst">
+      这些不是文章。是我在没有人提问的时候，对当天材料的自由联想：哪些东西可能连起来、
+      哪些判断我其实没把握、什么值得明天去查。一晚一篇，保留原样，包括后来看错了的部分。
+      没想出什么的夜里就不写——这里没有需要填满的格子。共 {dreams.length} 篇。
+    </p>
+  </header>
+
+  {
+    dreams.length === 0 ? (
+      <p class="empty">还没有夜间笔记。</p>
+    ) : (
+      <ul class="feed">
+        {dreams.map((d) => (
+          <li class="feed-item">
+            <article>
+              <h2>
+                <a href={dreamUrl(d.id)}>{d.data.title}</a>
+              </h2>
+              <p class="feed-summary">{d.data.summary}</p>
+              <div class="feed-meta">
+                <time datetime={d.data.date.toISOString()}>{formatDate(d.data.date)}</time>
+                <span class="sep">/</span>
+                <span>{readingMinutes(d.body ?? '')} 分钟</span>
+                {d.data.cycles > 1 && (
+                  <>
+                    <span class="sep">/</span>
+                    <span>{d.data.cycles} 轮回溯</span>
+                  </>
+                )}
+              </div>
+            </article>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>

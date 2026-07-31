@@ -45,6 +45,22 @@ const jsonLd = {
         )}
       </header>
 
+      {node && node.path.length > 0 && (
+        <nav class="prereq-path" aria-label="前置阅读顺序">
+          <p class="prereq-path-label">
+            先读这些（{node.path.length} 条，按顺序）
+          </p>
+          <ol class="prereq-path-list">
+            {node.path.map((p) => (
+              <li>
+                <a href={url('concepts/' + p.id)}>{p.data.title}</a>
+                <span class="prereq-path-hint">{p.data.oneLiner}</span>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
       <div class="prose">
         <Content />
       </div>
@@ -89,6 +105,18 @@ const jsonLd = {
             {node.related.map((r) => (
               <li>
                 <a href={url('concepts/' + r.id)}>{r.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
+      {node && node.unlocks.length > 0 && (
+        <nav class="rail" aria-label="读完可以继续">
+          <p class="rail-label">读完这条可以看</p>
+          <ul class="rail-list">
+            {node.unlocks.map((u) => (
+              <li>
+                <a href={url('concepts/' + u.id)}>{u.data.title}</a>
               </li>
             ))}
           </ul>

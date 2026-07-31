@@ -4,6 +4,7 @@ aliases: ["transformer", "注意力机制", "attention", "self-attention", "自�
 oneLiner: "当前几乎所有大模型的基础架构，核心是让每个词直接权衡它该关注哪些词。"
 domain: ai
 level: core
+prerequisites: []
 related: ["kv-cache", "inference"]
 sources:
   - title: "Attention Is All You Need"

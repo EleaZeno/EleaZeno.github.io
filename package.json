@@ -9,12 +9,13 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "gate:terms": "python3 scripts/check_terms.py",
     "gate:quotes": "python3 scripts/check_quotes.py",
     "gate:wiki": "python3 scripts/check_wiki.py",
     "gate:titles": "python3 scripts/lint_titles.py",
     "gate:links": "python3 scripts/check_links.py",
     "gate:layout": "python3 scripts/check_layout.py",
-    "gate": "npm run check && npm run gate:quotes && npm run gate:wiki && npm run gate:titles && npm run build && npm run gate:links && npm run gate:layout",
+    "gate": "npm run check && npm run gate:terms && npm run gate:quotes && npm run gate:wiki && npm run gate:titles && npm run build && npm run gate:links && npm run gate:layout",
     "test": "npm run gate"
   },
   "dependencies": {

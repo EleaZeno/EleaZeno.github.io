@@ -27,7 +27,7 @@ const { items, heading = '相关的一手文献拆解' } = Astro.props as Props;
           <li>
             <a href={url(`classics/${id}`)}>{data.title}</a>
             <span class="muted mono"> {data.originalYear}</span>
-            <p class="muted" style="margin:0.2rem 0 0; font-size:0.85rem">{data.originalTitle}</p>
+            <p class="muted row-note">{data.originalTitle}</p>
           </li>
         ))}
       </ul>

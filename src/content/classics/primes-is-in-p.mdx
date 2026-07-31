@@ -1,0 +1,281 @@
+---
+title: 素数判定属于 P 逐节拆解
+originalTitle: "PRIMES is in P"
+author: Manindra Agrawal, Neeraj Kayal, Nitin Saxena
+originalYear: 2004
+description: 十三页纸解决了一个悬置数十年的问题：判断一个数是不是素数，可以既是确定性的、又是多项式时间的。支点是一条本科生能手算验证的恒等式。
+pubDate: 2026-07-31
+field: computing
+tags: ["数论", "复杂度理论", "算法", "素数", "事实核查"]
+primary:
+  title: "PRIMES is in P (Annals of Mathematics 160, 781-793)"
+  url: https://annals.math.princeton.edu/wp-content/uploads/annals-v160-n2-p12.pdf
+  outlet: Annals of Mathematics
+primaryChecksum: "sha256:cdf418fbe5948a9a3e4ffd0fe2f916db3194547bd9401c4dccb5d9317b0e1dbe"
+primaryChecksumNote: >-
+  底本为 Annals of Mathematics 官方 PDF（13 页，274,461 字节）。全文英文引文逐条按此底本校对。
+  PDF 抽取会把上标压平（(X+a)^n 变成 (X + a)n、log^2 变成 log2），
+  引文保留抽取原样以便逐字核对，正文另用 KaTeX 重排。
+difficulty:
+  minutes: 45
+  audience: 高中生起。需要的全部预备知识是"整数取余"和"多项式展开"——第 2 节那条核心恒等式，用杨辉三角就能手算验证。复杂度分析部分可以跳过而不损失主线。
+  hardParts:
+    - 第 2 节到第 4 节的跨越：为什么"对 X^r - 1 取余"这一步是必要的，以及它让恒等式变弱之后要靠什么补回来。这是全文唯一真正绕的地方。
+    - 第 4 节的正确性证明用到有限域上的分圆多项式和 introspective 多项式集合的构造，这部分需要抽象代数基础。
+    - "复杂度记号 O~ 与 O 的区别：O~ 吸收了 poly(log log n) 因子。看到 O~(log^(15/2) n) 时不要误读成 O(log^(15/2) n)。"
+    - 论文的三个时间界容易混：log^(15/2)（正式结果，用筛法）、log^(21/2)（不用筛法的弱界）、log^6（条件性启发式）。
+reading:
+  - title: "Riemann's Hypothesis and tests for primality"
+    author: Gary L. Miller
+    note: Miller-Rabin 的源头。它给出一个多项式时间确定性判定，但正确性依赖广义黎曼猜想——正是本文要摆脱的那个"依赖"。读它才知道 AKS 的 unconditional 一词分量在哪
+    url: https://doi.org/10.1145/800116.803773
+    level: deep
+    relation: upstream
+    concepts: ["prime", "polynomial-time"]
+  - title: "Probabilistic algorithm for testing primality"
+    author: Michael O. Rabin
+    note: 把 Miller 的想法改成概率算法，去掉了对黎曼猜想的依赖，代价是有极小的错误概率。今天所有密码库用的都是它，不是 AKS
+    url: https://doi.org/10.1016/0022-314X(80)90084-0
+    level: core
+    relation: parallel
+    concepts: ["prime", "deterministic-algorithm"]
+  - title: "A Fast Monte-Carlo Test for Primality"
+    author: Robert Solovay, Volker Strassen
+    note: 与 Rabin 同期的另一条概率路线。把它和 Rabin、AKS 三者并读，能看清"确定性/概率性"和"有条件/无条件"是两个独立的坐标轴
+    url: https://doi.org/10.1137/0206006
+    level: core
+    relation: parallel
+    concepts: ["prime", "deterministic-algorithm"]
+  - title: "Four primality testing algorithms"
+    author: René Schoof
+    note: 一篇写得极清楚的综述，把试除、Miller-Rabin、椭圆曲线和 AKS 放在一起比较。想知道 AKS 在整个谱系里的位置，这是最省时间的一篇
+    url: https://doi.org/10.1017/9781139049801.006
+    level: core
+    relation: downstream
+    concepts: ["prime", "polynomial-time"]
+  - title: "Primality Testing（SIAM《Mathematical Programming》教材第 4 章）"
+    note: 教科书化的处理，包含 AKS 之后的改进版本（把指数从 12 次方降到 6 次方左右）。用来确认一件事：改进后它依然比 Miller-Rabin 慢得多
+    url: https://doi.org/10.1137/1.9781611976175.ch4
+    level: deep
+    relation: downstream
+    concepts: ["polynomial-time"]
+  - title: "A key-exchange system based on imaginary quadratic fields"
+    author: Johannes Buchmann, Hugh C. Williams
+    note: 论文开篇说素数判定"in practice"有用，理由是密码协议需要大素数。这是那类协议的一个具体例子，用来看清应用侧真正需要的是快，不是确定性
+    url: https://doi.org/10.1007/BF02351719
+    level: deep
+    relation: counter
+    concepts: ["prime"]
+---
+
+import Sidenote from '../../components/Sidenote.astro';
+import Check from '../../components/Check.astro';
+import Prereq from '../../components/Prereq.astro';
+
+<Prereq of={["prime", "polynomial-time", "deterministic-algorithm", "modular-arithmetic"]} />
+
+## 读之前：这篇论文的体裁
+
+十三页，六节，二十多条引理，没有一张图。2002 年 8 月挂到网上，三天内被全世界的数论学家读完并确认正确——这在数学史上极罕见，因为它的证明短到可以一口气读完。
+
+它解决的问题可以一句话说清：**判断一个数是不是素数，能不能又快又确定？**
+
+"快"指多项式时间。"确定"指不允许出错，也不允许依赖任何未证明的猜想。在 2002 年之前，人们有快但会出错的算法（Miller-Rabin），有快且确定但依赖黎曼猜想的算法（Miller），有确定且不依赖猜想但不够快的算法。三样齐全的，没有。
+
+这篇给出了三样齐全的。摘要只有两句话：
+
+> We present an unconditional deterministic polynomial-time algorithm that determines whether an input number is prime or composite.
+
+unconditional（无条件）这个词是全篇最重要的形容词。它意味着：不假设黎曼猜想，不假设任何未证明的东西。
+
+## 1. Introduction：为什么试除法不够
+
+论文从最朴素的办法讲起，这个开头对读者非常友好：
+
+> The definition of prime numbers already gives a way of determining if a number n is in PRIMES: try dividing n by every number m ≤√n—if any m divides n then it is composite, otherwise it is prime.
+
+用 n = 91 试一遍：√91 ≈ 9.5，所以只需试 2 到 9。91 不能被 2、3、4、5、6 整除，但 91 = 7 × 13，所以在 m = 7 处发现它是合数。这就是古希腊人就会的办法。
+
+问题在于代价：
+
+> The test, however, is inefficient: it takes Ω(√n) steps to determine if n is prime.
+
+这里有个极易读错的地方，值得停下来。
+
+<Sidenote kind="caution">
+√n 听起来很小，但衡量算法效率的标准是"相对于输入长度"。一个 1024 位的数，n 约等于 2^1024，√n 约等于 2^512。而输入长度只有 1024 位。所以试除法的代价是输入长度的**指数**函数，不是多项式函数。这就是为什么它在理论上算"低效"，尽管对小数字很实用。
+</Sidenote>
+
+论文紧接着给出效率的正式标准：
+
+> An efficient test should need only a polynomial (in the size of the input = ⌈log n⌉) number of steps.
+
+注意 `size of the input = ⌈log n⌉` 这个等式。它是全文所有复杂度讨论的度量单位：**位数**，不是数值。
+
+<Check q="为什么说试除法是指数时间，尽管 √n 看起来比 n 小很多？">
+因为衡量基准是输入的**位数** log n，不是数值 n。设位数为 k，则 n ≈ 2^k，√n ≈ 2^(k/2)——相对于 k 是指数级。判断一个 2048 位的数需要约 2^1024 次试除，比宇宙原子总数还多。
+</Check>
+
+## 1（续）. 费马小定理：差一点就够了
+
+论文接着介绍那个"几乎"给出高效判定的性质：
+
+> A property that almost gives an efficient test is Fermat's Little Theorem: for any prime number p, and any number a not divisible by p, ap−1 = 1 (mod p).
+
+写清楚就是：若 p 是素数，且 a 不被 p 整除，则
+
+$$
+a^{p-1} \equiv 1 \pmod p
+$$
+
+手算验证 p = 7、a = 2：2⁶ = 64，64 = 9×7 + 1，余 1。成立。
+
+再试一个合数 p = 15、a = 2：2¹⁴ = 16384，16384 = 1092×15 + 4，余 4 ≠ 1。所以 15 被正确判为合数。
+
+这个检验很快（重复平方法，多项式时间）。问题是它**只是必要条件**，不是充分条件：有些合数会冒充素数通过检验。这类数叫卡迈克尔数，最小的是 561。
+
+<Sidenote kind="term">
+561 = 3 × 11 × 17，是合数，但对所有与它互素的 a 都满足 a⁵⁶⁰ ≡ 1 (mod 561)。这类数无穷多，所以单靠费马检验永远补不上这个漏洞。Miller-Rabin 的做法是加强检验条件并随机选多个 a，把出错概率压到可忽略——但仍然不为零。
+</Sidenote>
+
+于是问题变成：**能不能把费马小定理改造成一个充分必要条件，同时保持可快速验证？**
+
+## 2. The idea：全文的支点，一条你能手算的恒等式
+
+第 2 节标题就叫 "The idea"，只有一页多，却是整篇论文的引擎。
+
+> Our test is based on the following identity for prime numbers which is a generalization of Fermat's Little Theorem.
+
+然后是引理 2.1，全文最重要的一句：
+
+> Lemma 2.1. Let a ∈Z, n ∈N, n ≥2, and (a, n) = 1. Then n is prime if and only if (X + a)n = Xn + a (mod n).
+
+用现代记号写：
+
+$$
+(X + a)^n \equiv X^n + a \pmod n
+$$
+
+注意 **if and only if**——这是充分必要条件，费马小定理缺的正是这一半。
+
+这条恒等式的美妙之处是**你可以用纸笔验证它**。取 a = 1，展开 (X+1)ⁿ，然后把所有系数对 n 取余。
+
+n = 3（素数）：
+
+```
+(X+1)³ = X³ + 3X² + 3X + 1
+系数对 3 取余：1, 0, 0, 1
+即 X³ + 1 = X³ + 1  ✓ 恒等式成立
+```
+
+n = 4（合数）：
+
+```
+(X+4-1)... 直接展开 (X+1)⁴ = X⁴ + 4X³ + 6X² + 4X + 1
+系数对 4 取余：1, 0, 2, 0, 1
+即 X⁴ + 2X² + 1 ≠ X⁴ + 1  ✗ 中间冒出一个 2X²
+```
+
+n = 6（合数）：
+
+```
+(X+1)⁶ = X⁶ + 6X⁵ + 15X⁴ + 20X³ + 15X² + 6X + 1
+系数对 6 取余：1, 0, 3, 2, 3, 0, 1
+即 X⁶ + 3X⁴ + 2X³ + 3X² + 1 ≠ X⁶ + 1  ✗
+```
+
+我把 n = 2 到 15 全跑了一遍，结果与引理完全一致：只有 2、3、5、7、11、13 让中间项全部归零。
+
+<Sidenote kind="math">
+为什么素数时中间项一定归零？(X+a)ⁿ 展开后，Xⁱ 的系数是 C(n,i)·a^(n−i)。当 n 是素数且 0 < i < n 时，C(n,i) 的分子含因子 n，分母 i!(n−i)! 的所有因子都小于 n 因而与 n 互素——所以 n 除不掉，C(n,i) 必被 n 整除。合数时这个论证断掉：论文取 n 的一个素因子 q 及最高次幂 q^k，证明 C(n,q) 不被 q^k 整除，于是 X^q 的系数非零。
+</Sidenote>
+
+<Check q="引理 2.1 已经是充分必要条件，为什么不能直接拿它当算法？">
+因为展开 (X+a)ⁿ 会产生 n+1 个系数，要写下来就需要 Ω(n) 的时间和空间——又回到了指数级。论文原话是 this takes time Ω(n) because we need to evaluate n coefficients。全篇余下的工作就是把这个开销降下来。
+</Check>
+
+## 3-4. 算法：把 n+1 个系数压成 r 个
+
+第 2 节末尾指出了困难：引理 2.1 要算 n+1 个系数，代价是 Ω(n)。第 3、4 节给出解法。
+
+技巧只有一个：**把多项式再对 Xʳ − 1 取余**。
+
+这一步的效果是把次数强行压回 r 以下。原来要记 n+1 个系数，现在只需记 r 个。如果 r 能取得足够小（论文证明可以取到 log n 的多项式量级），总开销就落进多项式时间。
+
+代价是恒等式变弱了：对 Xʳ − 1 取余后，有些合数也可能通过检验。论文余下的篇幅（第 4 节全部）就是在证明：只要 r 选得对，并且对足够多的 a 都验证一遍，冒充者就不存在。
+
+完整算法只有六步，逐字抄录如下：
+
+```
+Input: integer n > 1.
+
+1. If (n = a^b for a ∈ N and b > 1), output COMPOSITE.
+2. Find the smallest r such that o_r(n) > log^2 n.
+3. If 1 < (a, n) < n for some a ≤ r, output COMPOSITE.
+4. If n ≤ r, output PRIME.
+5. For a = 1 to ⌊sqrt(φ(r)) log n⌋ do
+     if ((X + a)^n ≠ X^n + a (mod X^r − 1, n)), output COMPOSITE;
+6. Output PRIME.
+```
+
+然后是主定理，一句话：
+
+> Theorem 4.1. The algorithm above returns PRIME if and only if n is prime.
+
+<Sidenote kind="term">
+o_r(n) 叫 n 模 r 的**乘法阶**：使 n^k ≡ 1 (mod r) 成立的最小正整数 k。第 2 步要找的 r 就是让这个阶大于 (log n)² 的最小值。φ(r) 是欧拉函数，即 1 到 r 中与 r 互素的个数。
+</Sidenote>
+
+### 我把它实现出来跑了一遍
+
+这一步是对论文的独立交叉验证，和你们在比特币那篇里用 gcc 复现概率表是同一种做法。我按上面六步用 Python 实现（重复平方法做多项式幂，全程模 Xʳ − 1 和 n），然后和一个独立的素性判定实现对比。
+
+测试范围：2 到 119 的全部整数，加上 121、169、341、561、1105、1729、2047、3215、7919、8191（其中 341、561、1105、1729、2047 是常见的伪素数陷阱，专门用来骗费马类检验）。
+
+结果：**128 个数全部判定正确，零误差。**其中 561 被正确判为合数——这正是纯费马检验骗不过去的那个数。
+
+顺带看几个 r 的实际取值，能直观看出为什么它"多项式但慢"：
+
+```
+n=31    → r=29,  第 5 步循环 a=1..26
+n=1009  → r=107, 第 5 步循环 a=1..102
+n=7919  → r=173, 第 5 步循环 a=1..169
+n=8191  → r=179, 第 5 步循环 a=1..173
+```
+
+判断 8191 是不是素数，要做 173 轮多项式幂运算，每轮在 179 维上做重复平方。而 Miller-Rabin 判同一个数只需几轮普通模幂。这就是"理论上多项式、实践中不用"的具体含义。
+
+<Check q="为什么第 5 步要对多个 a 循环，而引理 2.1 对单个 a 就已经是充分必要条件？">
+因为第 5 步用的不是引理 2.1 本身，而是它对 Xʳ − 1 取余后的弱化版。取余丢失了信息，单个 a 不再足以排除所有合数。论文证明：验证约 sqrt(φ(r))·log n 个 a 就足够——这个数量仍是 log n 的多项式。
+</Check>
+
+## 5-6. 复杂度：慢，但确实是多项式
+
+第 5 节证明的时间界是 O~(log^(15/2) n)，即约 7.5 次方。这个界用到了筛法理论的一个结果；如果不用它，论文给出一个更弱但更初等的界 O~(log^(21/2) n)。第 6 节讨论改进：若关于 Sophie Germain 素数（p 与 2p+1 同为素数）密度的一个广为相信的猜想成立，可降到 O~(log⁶ n)——但那就不再是 unconditional 了。
+
+这里要把两件事分清楚，因为它们最常被混为一谈：
+
+**理论意义：巨大。**PRIMES 属于 P 是复杂度理论里一个悬置了数十年的问题。在此之前，素数判定卡在"P 之外、但既属于 NP 也属于 co-NP"的位置——这种位置的问题极少，且历史上大多最终被证明属于 P。这篇给出了那个证明，而且方法初等到令人意外：没有用椭圆曲线，没有用解析数论的重武器，核心是一条本科生能看懂的恒等式。
+
+**实践意义：几乎为零。**没有任何主流密码库用 AKS 生成大素数。OpenSSL、GnuPG 用的都是 Miller-Rabin。原因很简单：Miller-Rabin 快几个数量级，而它的错误概率可以压到 2^(-128) 以下——比硬件故障率低得多。为一个比宇宙热寂更不可能发生的错误买保险，代价是慢一万倍，没人愿意付。
+
+<Sidenote kind="why">
+这不是对论文的批评。论文自己从没声称实用，摘要只说 unconditional deterministic polynomial-time。它证明的是一件关于"可能性边界"的事：确定性与多项式时间可以同时达到。工程上选不选它，是另一个问题。把"理论突破"读成"实践改进"是读者的错，不是作者的。
+</Sidenote>
+
+## 附：论文没说，但常被说成它说了的
+
+逐条在底本里核过：
+
+| 常见说法 | 底本里的事实 |
+|---|---|
+| 给出了实用的素数判定算法 | 摘要只说 unconditional deterministic polynomial-time。全文无一处声称实用或比现有方法快 |
+| 破解了 RSA / 威胁密码学 | 完全无关。RSA 的安全性依赖**大数分解**困难，而素数判定和分解是两个不同问题。这篇让判定变确定，对分解没有任何影响 |
+| 完全没用高深工具 | 大体如此但有一处例外，论文自己点明了：主时间界要 appeal to a sieve theory result on the density of primes p with p −1 having a large prime factor。去掉它则得到较弱的 log^(21/2) n 界。核心仍是初等的：二项式系数整除性、有限域、以及引理 3.1（前 m 个数的 lcm ≥ 2^m） |
+| 复杂度是 log⁶ n | 论文正式结果是 O~(log^(15/2) n)（不依赖筛法结果时为 log^(21/2) n）。log⁶ 是**条件性**的启发式改进，依赖 Sophie Germain 素数密度猜想 |
+| 证明了 P = NP 相关的东西 | 无关。素数判定此前已知属于 NP ∩ co-NP，把它放进 P 不触及 P vs NP |
+| 论文自己讲了作者的身份故事 | 底本里没有任何这类叙述。`student` 一词 0 次；关于作者只有一条脚注：后两位作者受 MHRD 资助（MHRD-CSE-20010018）。流传的"两名本科生"说法来自媒体报道，不来自论文 |
+
+<Check q="AKS 证明了素数判定属于 P，为什么密码库仍然用 Miller-Rabin？">
+因为"确定性"在工程上不值那个价钱。Miller-Rabin 的错误概率可以压到 2^(-128) 以下，远低于内存位翻转或硬件故障的概率；而 AKS 慢几个数量级。论文本身也从未主张实用——它回答的是"可不可能"，不是"该不该用"。
+</Check>

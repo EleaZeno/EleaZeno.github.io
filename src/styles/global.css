@@ -36,6 +36,10 @@ body {
   font-kerning: normal;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  /* Mixed Chinese/Latin prose: let the engine insert the quarter-em it owes
+     between scripts, and keep punctuation from opening holes in the line. */
+  text-spacing-trim: space-first;
+  font-variant-numeric: proportional-nums;
 }
 
 /* Faint grid, like plotting paper. Pure decoration, so it is aria-hidden
@@ -467,13 +471,21 @@ a:hover {
   letter-spacing: -0.022em;
   margin: 0 0 0.85rem;
   font-weight: 400;
+  /* Balance the rag instead of leaving one word alone on the last line. */
+  text-wrap: balance;
 }
 
+/*
+ * Standfirst: the one-line answer, set larger and lighter than the body.
+ * Italic is avoided here because most standfirsts are Chinese (see the
+ * blockquote note on faked CJK obliques).
+ */
 .standfirst {
   font-size: 1.1rem;
   color: var(--fg-dim);
   line-height: 1.6;
   margin: 0 0 1.4rem;
+  text-wrap: pretty;
 }
 
 .byline {
@@ -492,11 +504,75 @@ a:hover {
 .byline a:hover { color: var(--accent); }
 .byline .sep { color: var(--rule-strong); }
 
+/*
+ * ---------- shared page furniture ----------
+ *
+ * These replace the inline style="" attributes that had accumulated across
+ * pages/. Same visual result, but the spacing scale now lives in one place,
+ * so a rhythm change no longer means editing seven templates.
+ */
+
+/* A section set off from the one above it. */
+.block-gap { margin-top: 3.5rem; }
+
+/* Tag strips: below the page furniture, above the feed. */
+.tags-lead { margin-bottom: 2.5rem; }
+.tags-trail { margin: 1.25rem 0 0; }
+
+/* Deck copy directly under a kicker or heading. */
+.deck { margin: 0 0 1rem; }
+.deck-tight { margin: 0.25rem 0 0; }
+.deck-mid { margin: 0 0 0.5rem; }
+
+/* The "read all -->" line that closes a digest section. */
+.more-link { margin: 1rem 0 0; }
+.more-link-flush { margin: 0; }
+
+/* Index pages run full width: the listing is the content, so the reading
+   measure does not apply. */
+.page-wide { max-width: 100%; }
+
+/* Listing page title, a step down from an article h1. */
+.page-title {
+  font-size: clamp(1.6rem, 3.6vw, 2.1rem);
+  margin: 0 0 2.5rem;
+}
+
+/* A count beside a listing title. */
+.page-title .count { font-size: 0.8rem; }
+
+/* Secondary line in a list row: original title, summary, date. */
+.row-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+}
+
+/* Digest entry heading, quieter than a real article title. */
+.digest-title {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0 0 0.4rem;
+}
+
+/* Metadata line, monospaced and small. */
+.meta-line {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+}
+
 /* ---------- prose ---------- */
 
 .prose > * + * { margin-top: 1.4rem; }
 
+/*
+ * Section headings carry a counter in the margin. The numeral is generated,
+ * not authored, so prose stays clean and renumbers itself; it sits outside the
+ * measure so the heading still reads as language rather than as a list item.
+ */
+.prose { counter-reset: section; }
+
 .prose h2 {
+  position: relative;
   font-family: var(--sans);
   font-size: 1.06rem;
   font-weight: 600;
@@ -535,12 +611,30 @@ a:hover {
   font-weight: 600;
   margin-top: 2.1rem;
   line-height: 1.4;
+  text-wrap: balance;
+}
+
+/* Never leave a heading stranded at the foot of a column or printed page. */
+.prose h2,
+.prose h3 {
+  break-after: avoid;
+  text-wrap: balance;
 }
 
 .prose h2 a,
 .prose h3 a { border: 0; }
 
 .prose p { margin: 0; }
+
+/*
+ * Deliberately no drop cap.
+ *
+ * A raised initial was tried and removed: CJK has no small-cap or true italic
+ * tradition, an opening character is often a full-width bracket (「, 《), and
+ * several bodies now open on a one-line transition sentence where a 3em
+ * initial reads as a rendering fault rather than as craft. Emphasis at the
+ * start of an argument is carried by the standfirst instead.
+ */
 
 .prose strong {
   font-weight: 600;
@@ -560,13 +654,32 @@ a:hover {
 
 .prose li + li { margin-top: 0.45rem; }
 
+/*
+ * Quotations.
+ *
+ * Italic is a Latin convention: CJK typefaces carry no true italic, so the
+ * browser fakes one by shearing the glyphs. Slant is therefore scoped to
+ * [lang='en'] (set by rehype-quote-lang) and Chinese quotations are set
+ * upright, distinguished by the rule and the indent instead.
+ *
+ * The opening mark hangs in the gutter rather than sitting in the measure,
+ * so the left edge of quoted prose stays flush with the surrounding text.
+ */
 .prose blockquote {
+  position: relative;
   margin: 0;
   padding: 0.2rem 0 0.2rem 1.1rem;
   border-left: 2px solid var(--accent-deep);
   color: var(--fg-dim);
-  font-style: italic;
 }
+
+.prose blockquote[lang='en'] {
+  font-style: italic;
+  /* Optical: an italic serif reads better with a touch more air. */
+  line-height: 1.66;
+}
+
+.prose blockquote > * + * { margin-top: 0.7rem; }
 
 .prose hr {
   border: 0;
@@ -897,33 +1010,72 @@ a:hover {
 
 /* ---------- dreams ---------- */
 
-.dream { max-width: var(--measure); }
+/* One entry per night, listed like the post feed. The full text lives on the
+   entry page, so the index only carries title, summary and stamp. */
 
-.dream-entry {
-  padding: 2rem 0;
+.feed-item {
+  padding: 1.9rem 0;
   border-bottom: 1px solid var(--rule);
 }
 
-.dream-stamp {
+.feed-item h2 {
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+}
+
+.feed-item h2 a { border: 0; }
+.feed-item h2 a:hover { color: var(--accent); }
+
+.feed-summary {
+  margin: 0 0 0.7rem;
+  color: var(--fg-muted);
+  max-width: var(--measure);
+}
+
+.feed-meta {
   display: flex;
-  gap: 0.9rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   align-items: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* Standing caveat on every entry page: these were written without checking. */
+.dream-note {
+  border-left: 2px solid var(--rule-strong);
+  padding: 0.1rem 0 0.1rem 1rem;
+  margin: 0 0 2rem;
+  max-width: var(--measure);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--fg-faint);
+}
+
+.dream-seed {
+  margin: 2.5rem 0 0;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--rule);
+  max-width: var(--measure);
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+}
+
+.dream-seed-label {
+  display: block;
   font-family: var(--mono);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--fg-faint);
-  margin-bottom: 1rem;
+  margin-bottom: 0.35rem;
 }
-
-.dream-cycle {
-  border: 1px solid var(--rule-strong);
-  border-radius: 2px;
-  padding: 0.08rem 0.4rem;
-  color: var(--accent-deep);
-}
-
-.dream-body { font-size: 0.99rem; }
 
 /* ---------- archive ---------- */
 
@@ -1462,6 +1614,119 @@ ul.plain li {
   color: var(--fg-dim);
 }
 
+/* Relation groups: upstream / parallel / downstream / counter. The label
+   carries its own hint so the grouping needs no author-written prose. */
+.reading-group { margin-top: 1.75rem; }
+.reading-group:first-of-type { margin-top: 1rem; }
+
+/* Each group restarts at 01: the numbering is within a relation, not across
+   the whole list, so "01" always means "start here for this kind". */
+.reading-group ol { counter-reset: reading; }
+
+.reading-rel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: baseline;
+  margin: 0 0 0.4rem;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+  border-top: none;
+  padding-top: 0;
+}
+
+.reading-rel-hint {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--fg-faint);
+}
+
+.reading-concepts {
+  margin: 0.4rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: baseline;
+  font-size: 0.76rem;
+}
+
+.reading-concepts-label {
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.reading-concept { color: var(--accent-deep); }
+
+/* An unresolved slug stays visible rather than vanishing: the gap is the
+   signal that a concept page still needs writing. */
+.reading-concept.missing {
+  color: var(--fg-faint);
+  text-decoration: line-through;
+}
+
+/* ---------- prerequisite reading path ---------- */
+/* The DAG made visible. `related` is a sideways list rendered in the rail;
+   this is the vertical one, so it gets ordinal numbers and sits above the
+   body where a lost reader will actually see it before starting. */
+
+.prereq-path {
+  margin: 0 0 2rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--bg-sunk);
+  border-left: 2px solid var(--rule-strong);
+}
+
+.prereq-path-label {
+  margin: 0 0 0.6rem;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.prereq-path-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: prereqpath;
+}
+
+.prereq-path-list li {
+  counter-increment: prereqpath;
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.8rem;
+  font-size: 0.85rem;
+}
+
+.prereq-path-list li::before {
+  content: counter(prereqpath);
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--fg-faint);
+}
+
+.prereq-path-hint {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--fg-dim);
+}
+
+@media (max-width: 40rem) {
+  .prereq-path { padding: 0.75rem 0.85rem; }
+  .prereq-path-hint { display: none; }
+}
+
 /* ---------- classics index ---------- */
 
 .classic-list {
@@ -1535,6 +1800,43 @@ ul.plain li {
 
 .classic-body blockquote p { margin: 0 0 0.6rem; }
 .classic-body blockquote p:last-child { margin-bottom: 0; }
+
+/*
+ * Quote/translation pairing.
+ *
+ * Every English quotation in a deconstruction is followed by its Chinese
+ * rendering. Left on their own the two read as unrelated blocks, so the
+ * translation is pulled up tight against the quote it serves and marked with
+ * a short rule -- the reader should see one object with two registers, not
+ * two paragraphs that happen to be adjacent.
+ *
+ * `:has()` does the binding: only a quote that is actually followed by a
+ * translation loses its bottom margin, so unpaired quotes keep their spacing.
+ */
+.classic-body blockquote:has(+ .zh),
+.prose blockquote:has(+ .zh) {
+  margin-bottom: 0.55rem;
+}
+
+.zh {
+  position: relative;
+  margin: 0 0 1.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--fg-dim);
+}
+
+/* A short rule aligned with the quote's own border, so the eye reads the
+   translation as hanging off the same spine. */
+.zh::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.5rem;
+  border-top: 1px solid var(--rule-strong);
+}
 
 /* Section-opening one-line thesis. */
 .classic-body .thesis {

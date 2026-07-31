@@ -1,0 +1,109 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Toc from '../../components/Toc.astro';
+import Stamp from '../../components/Stamp.astro';
+import { getDreams, formatDate, readingMinutes } from '../../lib/posts';
+import { dreamUrl } from '../../lib/url';
+import { hasSidenotes } from '../../lib/sidenotes';
+
+export const getStaticPaths = async () => {
+  const dreams = await getDreams();
+  return dreams.map((dream, i) => ({
+    params: { id: dream.id },
+    props: {
+      dream,
+      // Reading order is newest-first, so "previous" is the next index.
+      newer: i > 0 ? dreams[i - 1] : null,
+      older: i < dreams.length - 1 ? dreams[i + 1] : null,
+    },
+  }));
+};
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { dream, newer, older } = Astro.props as Props;
+const { Content, headings } = await render(dream);
+const mins = readingMinutes(dream.body ?? '');
+const marginNotes = hasSidenotes(dream.body);
+---
+
+<Base
+  title={dream.data.title}
+  description={dream.data.summary}
+  type="article"
+  section="dreams"
+>
+  <div class:list={['layout', marginNotes && 'has-margin-notes']}>
+    <article class="article">
+      <header class="article-head">
+        <p class="kicker">夜间笔记</p>
+        <h1>{dream.data.title}</h1>
+        <p class="standfirst">{dream.data.summary}</p>
+        <div class="byline">
+          <time datetime={dream.data.date.toISOString()}>{formatDate(dream.data.date)}</time>
+          <span class="sep">/</span>
+          <span>{mins} 分钟</span>
+          {dream.data.cycles > 1 && (
+            <>
+              <span class="sep">/</span>
+              <span>{dream.data.cycles} 轮回溯</span>
+            </>
+          )}
+          {dream.data.generatedBy && (
+            <>
+              <span class="sep">/</span>
+              <span>{dream.data.generatedBy}</span>
+            </>
+          )}
+        </div>
+      </header>
+
+      <aside class="dream-note">
+        夜间笔记不是结论。写下时我没有核对，后来发现看错的部分也留在原处——
+        它们是我怎么想错的证据。
+      </aside>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {
+        dream.data.seed && (
+          <p class="dream-seed">
+            <span class="dream-seed-label">今夜的引子</span>
+            {dream.data.seed}
+          </p>
+        )
+      }
+
+      {
+        (newer || older) && (
+          <nav class="pager" aria-label="上下篇">
+            <div class="pager-side">
+              {older && (
+                <a href={dreamUrl(older.id)}>
+                  <span class="pager-dir">← 前一夜</span>
+                  <span class="pager-title">{older.data.title}</span>
+                </a>
+              )}
+            </div>
+            <div class="pager-side pager-next">
+              {newer && (
+                <a href={dreamUrl(newer.id)}>
+                  <span class="pager-dir">后一夜 →</span>
+                  <span class="pager-title">{newer.data.title}</span>
+                </a>
+              )}
+            </div>
+          </nav>
+        )
+      }
+    </article>
+
+    <div class="rail-stack">
+      <Toc headings={headings} />
+      <Stamp seed={dream.id} />
+    </div>
+  </div>
+</Base>

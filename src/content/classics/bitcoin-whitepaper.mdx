@@ -30,9 +30,25 @@ prerequisites:
   - hash-function
   - public-key-cryptography
   - digital-signature
+  - key-pair
   - double-spending
-  - merkle-tree
+  - block
+  - node
+  - timestamp-server
   - proof-of-work
+  - hashrate
+  - difficulty-target
+  - longest-chain
+  - fork-orphan
+  - merkle-tree
+  - utxo
+  - consensus
+  - incentive
+  - sybil-attack
+  - byzantine-generals
+  - random-walk
+  - poisson-distribution
+  - gamblers-ruin
 difficulty:
   audience: 高中数学基础即可读完前十节；第十一节的概率推导需要一点微积分或统计学直觉，但结论部分不需要
   minutes: 55
@@ -47,20 +63,63 @@ reading:
     note: 白皮书只给机制骨架，这本给出真实字段、脚本和交易结构。想知道"80 字节区块头"具体装了什么就看它
     url: https://github.com/bitcoinbook/bitcoinbook
     level: intro
+    relation: downstream
+    concepts: [block, utxo, coinbase-transaction]
   - title: Hashcash - a denial of service counter-measure
     author: Adam Back
-    note: 白皮书第四节的工作量证明直接引自这篇。八页，读完就明白"前导零"这个设计不是中本聪首创
+    note: 白皮书第四节的工作量证明直接引自这篇。八页，读完就明白"前导零"这个设计不是中本聪首创，原本是用来反垃圾邮件的
     url: http://www.hashcash.org/papers/hashcash.pdf
     level: core
+    relation: upstream
+    concepts: [proof-of-work, hashcash]
+  - title: "Bitcoin P2P e-cash paper（2008-11-13 邮件列表回复）"
+    author: Satoshi Nakamoto
+    note: 白皮书正文 Byzantine 出现 0 次，中本聪却在这封邮件里说工作量证明链就是拜占庭将军问题的解，并给了一个白皮书里没有的比喻。本文第 5 节已全文引用，这里给一手出处
+    url: https://satoshi.nakamotoinstitute.org/emails/cryptography/11/
+    level: intro
+    relation: upstream
+    concepts: [byzantine-generals, longest-chain]
+  - title: The Byzantine Generals Problem
+    author: Leslie Lamport, Robert Shostak, Marshall Pease
+    note: 同一个问题的另一份答卷，比白皮书早 26 年。它给的是 3m+1 容错下界且要求参与者名单已知；中本聪用开放准入加经济激励换掉了名单。并排读才看清"去中心化"在两篇里不是同一个意思
+    url: https://lamport.azurewebsites.net/pubs/byz.pdf
+    level: deep
+    relation: parallel
+    concepts: [byzantine-generals, sybil-attack]
+  - title: How to Time-Stamp a Digital Document
+    author: Stuart Haber, W. Scott Stornetta
+    note: 白皮书引用次数最多的一篇（8 条参考文献里占 3 条）。第 3 节那句"把报纸公示搬到网络上"的原型就在这里，读完会发现哈希链本身并非比特币的发明
+    url: https://www.anf.es/pdf/Haber_Stornetta.pdf
+    level: core
+    relation: upstream
+    concepts: [timestamp-server, hash-function]
   - title: An Introduction to Probability Theory and Its Applications, Vol. 1
     author: William Feller
-    note: 白皮书唯一的数学参考文献。第十四章讲随机游走与赌徒破产，(q/p)^z 的来处就在那里
+    note: 白皮书唯一的数学参考文献。第十四章讲随机游走与赌徒破产，第 11 节那个 (q/p)^z 的来处就在那里——原文直接引用而没有证明
     level: deep
+    relation: upstream
+    concepts: [gamblers-ruin, random-walk, poisson-distribution]
   - title: Bitcoin and Cryptocurrency Technologies
     author: Arvind Narayanan 等
-    note: 普林斯顿的公开课教材，把白皮书省略的部分（激励博弈、匿名性攻击、真实网络行为）补成了完整课程
+    note: 普林斯顿的公开课教材，把白皮书省略的部分（激励博弈、匿名性攻击、真实网络行为）补成完整课程
     url: https://bitcoinbook.cs.princeton.edu/
     level: core
+    relation: downstream
+    concepts: [node, fifty-one-percent-attack]
+  - title: "Majority is not Enough: Bitcoin Mining is Vulnerable"
+    author: Ittay Eyal, Emin Gün Sirer
+    note: 直接动摇第 11 节的模型。白皮书假设诚实节点会立刻广播出块，这篇证明"自私挖矿"策略下，掌握远低于 50% 算力的矿池也能拿到超额收益——p > q 这个安全边界比原文以为的更脆
+    url: https://arxiv.org/abs/1311.0243
+    level: deep
+    relation: counter
+    concepts: [fifty-one-percent-attack, longest-chain, hashrate]
+  - title: "On the Instability of Bitcoin Without the Block Reward"
+    author: Miles Carlsten, Harry Kalodner, S. Matthew Weinberg, Arvind Narayanan
+    note: 另一个反面材料。第 6 节说手续费终将取代新币奖励，这篇论证一旦只剩手续费，出块激励会变得不稳定——原文那句轻描淡写的过渡藏着一个未解决的问题
+    url: https://www.cs.princeton.edu/~smattw/CKWN-CCS16.pdf
+    level: deep
+    relation: counter
+    concepts: [transaction-fee, coinbase-transaction]
 take: |
   这篇论文最反直觉的地方，是它**没有解决**大多数人以为它解决了的问题。
 
@@ -97,7 +156,7 @@ import Check from '../../components/Check.astro';
 我核对的是 sha256 为 <code>b1674191…f4f553</code> 的那份 PDF，页首元数据里没有 <code>/Title</code> 也没有 <code>/Author</code> 字段——标题和作者名只作为正文第一页的排版文字存在。
 </Sidenote>
 
-<Prereq of={["hash-function", "public-key-cryptography", "digital-signature", "double-spending"]} />
+<Prereq of={["hash-function", "public-key-cryptography", "digital-signature", "key-pair", "double-spending", "block", "node", "timestamp-server", "proof-of-work", "hashrate", "difficulty-target", "longest-chain", "fork-orphan", "merkle-tree", "utxo", "consensus", "incentive", "sybil-attack", "byzantine-generals", "random-walk", "poisson-distribution", "gamblers-ruin"]} />
 
 ---
 
@@ -296,6 +355,54 @@ import Check from '../../components/Check.astro';
 
 **这一节假设你已经懂的东西：** 广播/gossip 传播、交易池（隐含，未命名）、区块组装、有效性校验、"未被花费"检查（即 UTXO 语义，未命名）、竞争分支、平局打破、链重组、best-effort 投递与丢包容忍、节点补块、网络分区。
 
+### 旁证：中本聪自己解释这一节在解什么问题
+
+白皮书正文里 `Byzantine` 出现 **0 次**。但白皮书公布后第 13 天，中本聪在密码学邮件列表上回复 James A. Donald 时，第一句话就是：
+
+> The proof-of-work chain is a solution to the Byzantine Generals' Problem.
+
+然后他给了一个白皮书里完全没有的比喻。这段是理解第 5 节最好的材料，且出自原作者亲笔，值得全文引用：
+
+> A number of Byzantine Generals each have a computer and want to attack the King's wi-fi by brute forcing the password, which they've learned is a certain number of characters in length. Once they stimulate the network to generate a packet, they must crack the password within a limited time to break in and erase the logs, otherwise they will be discovered and get in trouble. They only have enough CPU power to crack it fast enough if a majority of them attack at the same time.
+
+一群拜占庭将军各有一台电脑，想暴力破解国王的 wi-fi 密码。他们已经知道密码长度。一旦触发网络产生一个数据包，就必须在有限时间内破解进去把日志擦掉，否则会被发现、要吃苦头。而只有多数人同时开工，他们的总算力才够快。
+
+注意这个设定的巧妙：**"必须多数人同时动手"这个约束不是规则规定的，是物理决定的**。算力不够就是破解不完，没有裁判来执行这条规则。
+
+> They don't particularly care when the attack will be, just that they all agree. It has been decided that anyone who feels like it will announce a time, and whatever time is heard first will be the official attack time. The problem is that the network is not instantaneous, and if two generals announce different attack times at close to the same time, some may hear one first and others hear the other first.
+
+他们并不在乎具体几点动手，只要**都同意同一个时间**就行。约定是：谁想喊就喊一个时间，最先听到的那个算官方时间。麻烦在于网络不是瞬时的——如果两个将军几乎同时喊出不同的时间，有人先听到这个，有人先听到那个。
+
+这正是第 5 节那句 "If two nodes broadcast different versions of the next block simultaneously" 的原型，只是把"区块"换成了"进攻时间"。
+
+> They use a proof-of-work chain to solve the problem. Once each general receives whatever attack time he hears first, he sets his computer to solve an extremely difficult proof-of-work problem that includes the attack time in its hash. The proof-of-work is so difficult, it's expected to take 10 minutes of them all working at once before one of them finds a solution. Once one of the generals finds a proof-of-work, he broadcasts it to the network, and everyone changes their current proof-of-work computation to include that proof-of-work in the hash they're working on. If anyone was working on a different attack time, they switch to this one, because its proof-of-work chain is now longer.
+
+解法是用一条工作量证明链。每个将军收到他最先听见的那个进攻时间后，就让电脑去解一道极难的工作量证明题，题目的哈希里含着这个进攻时间。这道题难到：全体一起算，预计要 10 分钟才会有一个人算出来。谁先算出来就广播，其他人于是把这个证明并进自己正在算的哈希里。**原来在算别的进攻时间的人会切过来，因为这条工作量证明链现在更长了。**
+
+<Sidenote kind="why">
+这里的 <strong>10 minutes</strong> 和第 7 节 "blocks are generated every 10 minutes" 是同一个数。邮件比白皮书更早点明了这个数字的作用：它是"一次全网协同尝试"的时间粒度，不是随便挑的间隔。
+</Sidenote>
+
+> After two hours, one attack time should be hashed by a chain of 12 proofs-of-work. Every general, just by verifying the difficulty of the proof-of-work chain, can estimate how much parallel CPU power per hour was expended on it and see that it must have required the majority of the computers to produce that much proof-of-work in the allotted time.
+
+两小时后，一个进攻时间会被一条 12 个工作量证明组成的链哈希住。**每个将军只要验证这条链的难度，就能估算出每小时投入了多少并行算力**，从而看出：要在规定时间内产出这么多工作量证明，必须动用了多数电脑。
+
+这是整段最关键的一句，也是白皮书里被压缩掉的那一步推理。工作量证明的真正产出不是"一个数字"，而是**一份关于有多少人在协同工作的可验证证据**。12 这个数字来自 10 分钟一个、两小时共 12 个。
+
+> They had to all have seen it because the proof-of-work is proof that they worked on it. If the CPU power exhibited by the proof-of-work chain is sufficient to crack the password, they can safely attack at the agreed time.
+
+他们必然都看到了，因为工作量证明本身就是他们干过活的证明。如果这条链体现出的算力足以破解密码，他们就可以放心在约定时间动手。
+
+> The proof-of-work chain is how all the synchronisation, distributed database and global view problems you've asked about are solved.
+
+工作量证明链就是你问的所有同步问题、分布式数据库问题、全局视图问题的解法。
+
+<Sidenote kind="caution">
+把这段和 Lamport 1982 的原始论文对照，会发现两者的"解"不是一回事。Lamport 给的是 <strong>3m+1 容错下界</strong>：要容忍 m 个叛徒，需要至少 3m+1 个将军，且<strong>参与者名单必须已知</strong>。中本聪的方案不限制参与人数、不需要名单，代价是把"绝对的安全性"换成了"概率性的安全性"——第 11 节那三张表算的就是这个概率。所以两篇论文里的"去中心化"根本不是同一个意思。
+</Sidenote>
+
+为什么这封邮件值得放进正文，而不是丢在延伸阅读里：它是同一作者、同一时期、直接解释本节机制的材料。白皮书把"这系统到底在解什么问题"这句话省掉了，读者只能自己拼。邮件把它补上了。
+
 <Check q="节点如何向网络表达'我接受这个区块'？">
 通过**开始在它后面挖下一个区块**，把它的哈希填入新区块的 prev hash 字段。没有独立的投票或确认消息——接受和生产是同一个动作，这让协议不需要任何协商轮次。
 </Check>
@@ -454,7 +561,11 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 
 > The risk is that if the owner of a key is revealed, linking could reveal other transactions that belonged to the same owner.
 
+风险在于：一旦某个密钥的主人被认出来，关联分析就能顺着这条线把属于同一人的其他交易一并暴露。注意这里的因果方向——泄露不是从链上开始的，而是从链外的一次身份暴露开始，然后**沿着链上已有的关联反向扩散**。
+
 > Some linking is still unavoidable with multi-input transactions, which necessarily reveal that their inputs were owned by the same owner.
+
+多输入交易带来的部分关联是无法避免的：把几笔钱凑在一起花，本身就宣告了这几笔钱属于同一个人。
 
 <Sidenote kind="caution">
 多输入交易必然暴露这些输入属于同一人——这是链上聚类分析（clustering）的地基，也是今天所有链上追踪公司的主要抓手。白皮书明确承认了它，从未承诺匿名。
@@ -525,6 +636,8 @@ $$
 
 > He doesn't know the exact amount of progress the attacker has made, but assuming the honest blocks took the average expected time per block, the attacker's potential progress will be a Poisson distribution with expected value:
 
+收款方不知道攻击者到底挖了多少。但只要假设那些诚实区块花的是每块的平均预期时间，攻击者可能的进度就服从一个泊松分布，其期望值为：
+
 $$
 \lambda = z \frac{q}{p}
 $$
@@ -541,6 +654,8 @@ $$
 
 > To get the probability the attacker could still catch up now, we multiply the Poisson density for each amount of progress he could have made by the probability he could catch up from that point:
 
+要算出攻击者此刻仍能追平的概率，就把他可能取得的每一种进度的泊松密度，乘上从那个位置追平的概率：
+
 $$
 \sum_{k=0}^{\infty} \frac{\lambda^k e^{-\lambda}}{k!} \cdot
 \begin{cases}
@@ -556,6 +671,8 @@ $$
 最后一步是纯技巧——把无穷尾部换成有限求和：
 
 > Rearranging to avoid summing the infinite tail of the distribution...
+
+重排一下，避免去求这个分布的无穷尾部……
 
 $$
 1 - \sum_{k=0}^{z} \frac{\lambda^k e^{-\lambda}}{k!}\left(1 - (q/p)^{(z-k)}\right)
@@ -629,6 +746,8 @@ z=50   P=0.0000006
 反过来解：要把成功概率压到 0.1% 以下需要几个确认？
 
 > Solving for P less than 0.1%...
+
+求解使 P 小于 0.1% 的取值……
 
 ```
 P < 0.001
@@ -749,7 +868,7 @@ q=0.45   z=340
 | 用了 SPV 这个缩写 | `SPV` 0 次，只有标题的全称 |
 | 提到 ECDSA / 椭圆曲线 | 均 0 次。只有泛称 digital signatures；SHA-256 也只是 "such as with SHA-256" 的举例 |
 | 用了 decentralized / trustless / ledger / wallet | 逐一核查：`decentral*` 0、`trustless` 0、`ledger` 0、`wallet` 0、`Byzantine` 0、`fork` 0、`coinbase` 0、`genesis` 0、`UTXO` 0、`cryptocurrency` 0、`smart contract` 0 |
-| 把节点叫 miner | `mining`/`miner` 各 1 次，且**只**出现在黄金类比 "analogous to gold miners expending resources"。论文从不称节点为矿工 |
+| 把节点叫 miner | `miners` 1 次（仅在黄金类比 "analogous to gold miners expending resources" 中），`mining` 作为独立单词 **0 次**。论文从不称节点为矿工，只叫 node |
 | 说了"累积工作量最大的链" | 原文说 the longest chain，并解释为 "which has the greatest proof-of-work effort invested in it"，把两者当同义。难度可变后二者不再等价——这是论文的隐含缺口 |
 | 承诺匿名 | 用词是 "keeping public keys anonymous"，同时明确承认 "Some linking is still unavoidable with multi-input transactions"。是有限假名性，不是匿名承诺 |
 
