@@ -127,7 +127,10 @@ def main() -> int:
         results = list(pool.map(lambda r: (r, *fetch(base + r)), probed))
 
     missing, errored, ok = [], [], 0
-    for route, status, _body, err in results:
+    home = (0, b"")
+    for route, status, body, err in results:
+        if route == "/":
+            home = (status, body)
         if status == 200:
             ok += 1
         elif status == 404:
@@ -136,15 +139,16 @@ def main() -> int:
             errored.append({"route": route, "status": status, "error": err})
 
     # Freshness: does the live homepage reference the same hashed bundle as dist/?
+    # Astro content-hashes that filename, so a mismatch means what is live is not
+    # the build in dist/. The homepage body comes from the probe pass above --
+    # "/" is always in `probed`, so re-requesting it would just be a second hit.
     local_css = local_css_bundle()
-    status, body, err = fetch(base + "/")
-    live_css = None
-    if status == 200:
-        m = re.search(rb"_astro/[A-Za-z0-9._-]+\.css", body)
-        live_css = m.group(0).decode() if m else None
+    home_status, home_body = home
+    m = re.search(rb"_astro/[A-Za-z0-9._-]+\.css", home_body)
+    live_css = m.group(0).decode() if m else None
 
     problems: list[str] = []
-    unreachable = len(errored) == len(probed) and probed
+    unreachable = bool(probed) and len(errored) == len(probed)
     if unreachable:
         # Everything failed at the transport layer: this prober has no route to
         # the site. That is a fact about the prober, not about the site.
@@ -157,7 +161,7 @@ def main() -> int:
             problems.append(
                 f"live bundle {live_css} != local {local_css}: "
                 "the deployed build is not the one in dist/")
-        if local_css and status == 200 and live_css is None:
+        if local_css and home_status == 200 and live_css is None:
             problems.append("live homepage references no CSS bundle")
 
     out = {
