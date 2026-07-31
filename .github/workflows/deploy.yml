@@ -65,3 +65,42 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Every other gate reads source text or the local build. None of them can tell
+  # whether the published site actually answers a request, so a deploy that
+  # reported success while serving 404s on the new routes would go unnoticed
+  # until someone tried to read the site. This closes that loop.
+  verify-live:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Same source of truth the build job uses, so the rebuild below is byte
+      # -identical to what was deployed instead of relying on a hardcoded URL.
+      - name: Resolve Pages URL
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # dist/ is rebuilt here rather than downloaded: check_live.py compares the
+      # live bundle hash against a local build, so it needs the same inputs the
+      # deploy was made from.
+      - name: Rebuild for comparison
+        env:
+          SITE_URL: ${{ steps.pages.outputs.origin }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
+
+      # Pages needs a moment to propagate after deploy-pages reports success.
+      - name: Wait for propagation
+        run: sleep 45
+
+      - name: Probe the live site
+        run: python3 scripts/check_live.py --base ${{ steps.pages.outputs.origin }}

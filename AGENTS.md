@@ -47,10 +47,28 @@
 ## 四、闸门
 
 ```bash
-npm run gate     # check → quotes → wiki → titles → build → links → layout
+npm run gate     # check → terms → quotes → wiki → titles → build → links → layout
 ```
 
-单跑：`npm run gate:quotes` / `:wiki` / `:titles` / `:links` / `:layout`。
+单跑：`npm run gate:terms` / `:quotes` / `:wiki` / `:titles` / `:links` / `:layout` / `:live`。
+
+`npm run verify` = `gate` + `gate:live`。`gate:live`（`scripts/check_live.py`）不在默认
+`gate` 链里，因为它要联网：离线跑会让整条链变红，而那跟代码无关。
+
+**「网站挂了」的排查顺序**（别手搓 curl，直接跑）：
+
+```bash
+npm run build && npm run gate:live      # 全量探 dist/ 里的每条路由
+python3 scripts/check_live.py --sample 12   # 只抽样，快
+```
+
+它断言三件事：`dist/` 里的每条路由线上都不是 404、线上引用的 CSS 包哈希与本地构建一致
+（不一致说明部署的不是当前代码）、首页拿得到且非空。曾经的真实故障形态是**首页 200
+但新路由全 404**——因为文件写好了从没提交，CI 也就从没跑过。只看首页会漏掉。
+
+判「站点挂了」之前先确认不是本地网络：这台机器没有 IPv6 出口（`ip -6 route show default`
+为空），所以任何「v6 不通」的结论都是环境假象，不是站点故障。GitHub Pages 的四个 IPv4
+（185.199.108-111.153）逐个 curl 才是有效证据。
 
 `gate:layout`（`scripts/check_layout.py`）解析 `tokens.css` + `global.css` 的真实 `@media` 级联，在 14 个视口宽度上复算栅格轨道，断言三件事：正文列宽落在 28~50rem、**收窄视口不会让列变宽**、没有 sidenote 的页面不预留 margin。加它的原因是其余闸门全部只读源文本，没有任何一个能算出渲染宽度——所以一个排版上不可读的页面可以通过全部检查。
 
