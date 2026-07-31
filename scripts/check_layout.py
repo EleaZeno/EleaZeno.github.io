@@ -37,11 +37,24 @@ TOKENS_CSS = ROOT / "src" / "styles" / "tokens.css"
 # Readable-line bounds. The upper bound is generous (CJK tolerates longer lines
 # than Latin) but finite; the point is catching runaway columns, not policing
 # typography to the pixel.
+# Lower bound on the text column. A fixed floor is wrong across viewports: a
+# 390px phone physically cannot host 26rem (416px) of text, so judging it by the
+# desktop floor reports a defect that no CSS change could fix. What actually
+# matters on a phone is that the shell is not eating the screen -- the column
+# should get nearly all of the viewport.
 MIN_REM = 26.0
+# Below this viewport, assert the column claims at least this fraction of the
+# screen instead of an absolute rem floor.
+NARROW_PX = 700
+MIN_VIEWPORT_FRACTION = 0.86
 MAX_REM = 50.0
 REM_PX = 16.0
 
-WIDTHS = [1920, 1600, 1440, 1366, 1280, 1216, 1200, 1100, 1044, 1024, 992, 900, 820, 768]
+# Phone widths matter as much as desktop: the reported unreadable page was seen
+# on iPhone Safari. 390 = iPhone 14/15, 430 = 15 Pro Max, 360 = common Android,
+# 320 = smallest still-supported viewport.
+WIDTHS = [1920, 1600, 1440, 1366, 1280, 1216, 1200, 1100, 1044, 1024, 992, 900,
+          820, 768, 700, 600, 540, 430, 414, 390, 375, 360, 320]
 
 
 def strip_comments(css: str) -> str:
@@ -302,8 +315,18 @@ def main() -> int:
         for label, has in (("plain", False), ("sidenotes", True)):
             rem, origin, reserved = text_column_rem(width, has, tok, rules)
             row[label] = f"{rem:.2f}rem/{rem * REM_PX:.0f}px"
-            if rem < MIN_REM:
-                problems.append(f"{width}px {label}: column {rem:.2f}rem below {MIN_REM}rem [{origin}]")
+            if width >= NARROW_PX:
+                if rem < MIN_REM:
+                    problems.append(
+                        f"{width}px {label}: column {rem:.2f}rem below {MIN_REM}rem [{origin}]")
+            else:
+                # Phone: the column cannot reach a desktop rem floor, so require
+                # instead that the shell is not stealing the screen.
+                frac = (rem * REM_PX) / width
+                if frac < MIN_VIEWPORT_FRACTION:
+                    problems.append(
+                        f"{width}px {label}: column {rem * REM_PX:.0f}px is only "
+                        f"{frac:.0%} of viewport (want >={MIN_VIEWPORT_FRACTION:.0%}) [{origin}]")
             if rem > MAX_REM:
                 problems.append(f"{width}px {label}: column {rem:.2f}rem above {MAX_REM}rem [{origin}]")
             # The original defect: space reserved beside text that has no notes
