@@ -64,34 +64,28 @@ def main(argv: list[str] | None = None) -> int:
                     help="only verify remote reachability, change nothing")
     args = ap.parse_args(argv)
 
-    # Reader-model refresh: record-post runs at creation time, so any later
-    # edit to a title or body leaves the DB holding the draft. The next day's
-    # brief then reports headlines that never shipped -- observed 2026-08-02
-    # with a Big Five title the title gate had actually rejected. sync_all_posts
-    # is an idempotent upsert over every post on disk, so just run it here,
-    # where we already know the tree is about to become the published state.
-    sync = subprocess.run([sys.executable, 'scripts/reader_model.py', 'sync'],
-                          capture_output=True, text=True, cwd=str(REPO))
-    if sync.returncode != 0:
-        # Non-fatal: the reader model is advisory, never a publish blocker.
-        sys.stderr.write('warning: reader-model sync failed' + chr(10))
-        sys.stderr.write((sync.stderr or sync.stdout or '')[:400])
+    def script(name: str, *argv_: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([sys.executable, f"scripts/{name}", *argv_],
+                              capture_output=True, text=True, cwd=str(REPO))
 
-    # Title gate: refuse to publish clickbait or vague headlines.
-    lint = subprocess.run([sys.executable, 'scripts/lint_titles.py'],
-                          capture_output=True, text=True, cwd=str(REPO))
-    if lint.returncode != 0:
-        sys.stderr.write(lint.stdout or lint.stderr)
-        sys.stderr.write(chr(10) + 'refusing to publish: fix the titles above' + chr(10))
-        return 3
+    def gate(name: str, complaint: str, code: int) -> int | None:
+        """Run a checker; on failure echo its report and return an exit code."""
+        p = script(name)
+        if p.returncode == 0:
+            return None
+        sys.stderr.write(p.stdout or p.stderr)
+        sys.stderr.write(f"{chr(10)}refusing to publish: {complaint}{chr(10)}")
+        return code
 
-    # Wiki gate: dangling refs / orphan terms / jargon-first definitions.
-    wiki = subprocess.run([sys.executable, 'scripts/check_wiki.py'],
-                          capture_output=True, text=True, cwd=str(REPO))
-    if wiki.returncode != 0:
-        sys.stderr.write(wiki.stdout or wiki.stderr)
-        sys.stderr.write(chr(10) + 'refusing to publish: fix the wiki issues above' + chr(10))
-        return 4
+    # Title gate: clickbait or vague headlines. Wiki gate: dangling refs,
+    # orphan terms, jargon-first definitions.
+    for name, complaint, code in (
+        ("lint_titles.py", "fix the titles above", 3),
+        ("check_wiki.py", "fix the wiki issues above", 4),
+    ):
+        rc = gate(name, complaint, code)
+        if rc is not None:
+            return rc
 
     token = load_token()
     push_url = f"https://x-access-token:{token}@{PROXY.split('://', 1)[1]}/{SLUG}.git"
@@ -138,6 +132,17 @@ def main(argv: list[str] | None = None) -> int:
                   sys.stdout, ensure_ascii=False, indent=2)
         sys.stdout.write("\n")
         return 0
+
+    # record-post fires when a post is created, so any later edit to a title
+    # leaves the DB holding the draft -- on 2026-08-02 it served tomorrow's
+    # brief a headline the title gate had itself rejected. sync is an idempotent
+    # upsert over the posts on disk; run it here, past the read-only exits,
+    # where the tree is exactly what we are about to publish. Advisory data,
+    # so a failure warns rather than blocks.
+    sync = script("reader_model.py", "sync")
+    if sync.returncode != 0:
+        sys.stderr.write("warning: reader-model sync failed" + chr(10))
+        sys.stderr.write((sync.stderr or sync.stdout or "")[:400])
 
     run(["git", "add", "-A"], token)
     commit = run(
