@@ -64,6 +64,19 @@ def main(argv: list[str] | None = None) -> int:
                     help="only verify remote reachability, change nothing")
     args = ap.parse_args(argv)
 
+    # Reader-model refresh: record-post runs at creation time, so any later
+    # edit to a title or body leaves the DB holding the draft. The next day's
+    # brief then reports headlines that never shipped -- observed 2026-08-02
+    # with a Big Five title the title gate had actually rejected. sync_all_posts
+    # is an idempotent upsert over every post on disk, so just run it here,
+    # where we already know the tree is about to become the published state.
+    sync = subprocess.run([sys.executable, 'scripts/reader_model.py', 'sync'],
+                          capture_output=True, text=True, cwd=str(REPO))
+    if sync.returncode != 0:
+        # Non-fatal: the reader model is advisory, never a publish blocker.
+        sys.stderr.write('warning: reader-model sync failed' + chr(10))
+        sys.stderr.write((sync.stderr or sync.stdout or '')[:400])
+
     # Title gate: refuse to publish clickbait or vague headlines.
     lint = subprocess.run([sys.executable, 'scripts/lint_titles.py'],
                           capture_output=True, text=True, cwd=str(REPO))
