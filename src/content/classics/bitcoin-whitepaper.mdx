@@ -139,6 +139,7 @@ generatedBy: Hermes agent 逐字核对 PDF 原件
 import Sidenote from '../../components/Sidenote.astro';
 import Prereq from '../../components/Prereq.astro';
 import Check from '../../components/Check.astro';
+import Apply from '../../components/Apply.astro';
 
 ## 读之前：这篇论文的体裁
 
@@ -292,11 +293,15 @@ import Check from '../../components/Check.astro';
 
 > If the majority were based on one-IP-address-one-vote, it could be subverted by anyone able to allocate many IPs.  Proof-of-work is essentially one-CPU-one-vote.
 
+如果多数是按「一个 IP 地址一票」来算，那么任何能分配到大量 IP 的人都能颠覆它。工作量证明本质上是「一个 CPU 一票」。
+
 <Sidenote kind="why">
 这就是女巫攻击（Sybil attack）的解法，尽管原文没用这个词。任何"一个身份一票"的方案在开放网络里都会崩塌，因为身份可以免费批量制造。工作量证明把投票权绑到<strong>无法免费复制的东西</strong>——算力——上面。这是全文最深的一个设计洞察。
 </Sidenote>
 
 > The majority decision is represented by the longest chain, which has the greatest proof-of-work effort invested in it.
+
+多数派的决定由最长的链代表，因为那条链上投入的工作量证明最多。只要多数算力由不合作攻击者之外的节点掌握，诚实链就会增长最快，把其他竞争链甩在后面。
 
 <Sidenote kind="caution">
 中本聪把"最长的链"和"投入工作量最大的链"当成同义词。在难度恒定时它们确实等价，但难度可变之后就不再等价了——真实的比特币实现按<strong>累积难度</strong>而非区块个数选链。这是白皮书的一个隐含假设，不是笔误，而是当时尚未浮现的区分。
@@ -342,6 +347,8 @@ import Check from '../../components/Check.astro';
 分叉的处理只有两句话：
 
 > If two nodes broadcast different versions of the next block simultaneously, some nodes may receive one or the other first.  In that case, they work on the first one they received, but save the other branch in case it becomes longer.  The tie will be broken when the next proof-of-work is found and one branch becomes longer; the nodes that were working on the other branch will then switch to the longer one.
+
+如果两个节点同时广播了下一个区块的不同版本，有些节点会先收到其中一个。这时它们先在自己收到的那个分支上工作，但会把另一个分支保存下来，以防它后来变成更长的那条。
 
 <Sidenote kind="caution">
 原文全篇<strong>没有出现 fork 这个词</strong>，用的是 <em>branch</em>。也没有"重组"（reorganization）的说法，只描述了"切换到更长的那条"这个行为。
@@ -423,6 +430,8 @@ import Check from '../../components/Check.astro';
 
 > The steady addition of a constant of amount of new coins is analogous to gold miners expending resources to add gold to circulation.  In our case, it is CPU time and electricity that is expended.
 
+稳定新增固定数量的新币，类比于金矿开采者消耗资源把黄金投入流通。在这里被消耗的资源是 CPU 时间和电力。
+
 <Sidenote kind="caution">
 原文这里有个语法错误：<em>a constant of amount of new coins</em>（多了个 of）。我保留原样。但更重要的是它说的是"<strong>恒定速率</strong>增发"——这与后来实际实现的每四年减半在语义上是<strong>相反</strong>的。减半计划不在白皮书里。
 </Sidenote>
@@ -463,6 +472,8 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 
 > A block header with no transactions would be about 80 bytes.  If we suppose blocks are generated every 10 minutes, 80 bytes * 6 * 24 * 365 = 4.2MB per year.  With computer systems typically selling with 2GB of RAM as of 2008, and Moore's Law predicting current growth of 1.2GB per year, storage should not be a problem even if the block headers must be kept in memory.
 
+不含交易的区块头大约 80 字节。如果我们假设区块每 10 分钟生成一个，那么每年是 80 × 6 × 24 × 365 = 4.2MB。
+
 <Sidenote kind="math">
 拆开：80 字节 × 每小时 6 块 × 每天 24 小时 × 每年 365 天 = 4.2 MB/年。那个 <strong>6</strong> 就是"10 分钟出一块"的唯一来处——它是这个估算的<strong>假设输入</strong>，不是协议规定。
 </Sidenote>
@@ -483,6 +494,8 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 
 > It is possible to verify payments without running a full network node.  A user only needs to keep a copy of the block headers of the longest proof-of-work chain, which he can get by querying network nodes until he's convinced he has the longest chain, and obtain the Merkle branch linking the transaction to the block it's timestamped in.
 
+无需运行完整网络节点也能验证支付。用户只需保存最长工作量证明链的区块头副本，他可以不断向网络节点查询直到确信自己拿到的是最长链，然后取得把该交易挂到其所在区块上的 Merkle 分支。
+
 <Sidenote kind="term">
 "SPV" 这个缩写<strong>不在原文里</strong>，只有第 8 节标题的全称 Simplified Payment Verification。今天普遍使用的缩写是后人的简化。
 </Sidenote>
@@ -496,6 +509,8 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 补救办法也只有一句：
 
 > One strategy to protect against this would be to accept alerts from network nodes when they detect an invalid block, prompting the user's software to download the full block and alerted transactions to confirm the inconsistency.
+
+一种防护策略是接受网络节点在检测到无效区块时发出的警报，提示用户的软件下载完整区块并核对不一致的交易。
 
 <Sidenote kind="caution">
 注意这是 <em>one strategy would be</em>——一个建议，不是设计。这句话是后来比特币 alert 机制的思想来源，但论文没有说明谁有权发警报、如何防止伪造警报。这是白皮书公认的留白之一。
@@ -520,6 +535,8 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 一笔交易可以有多个输入、多个输出。原文补了一句关于结构的量化断言：
 
 > Normally there will be either a single input from a larger previous transaction or multiple inputs combining smaller amounts, and at most two outputs: one for the payment, and one returning the change, if any, back to the sender.
+
+通常情况下，要么是来自某笔更大的先前交易的单个输入，要么是多个凑成小额的输入；同时最多两个输出：一个给收款方，另一个是找零（如果有）退回给付款方。
 
 <Sidenote kind="term">
 "至多两个输出"——付款 + 找零。这是全文关于交易结构的唯一数量断言。也请注意原文说的是 <em>every cent</em>，<strong>没有</strong>出现 satoshi 这个单位（它是后人以中本聪命名的）。
@@ -550,6 +567,8 @@ Merkle 树在白皮书里的**首要用途是省磁盘**，不是轻钱包验证
 传统金融隐私靠访问控制（只有银行和当事人看得见）。比特币不能用这条路——第 2 节已经论证过全局广播是必需的。于是隐私被移到另一个断点：**公钥不与身份绑定**。
 
 > The public can see that someone is sending an amount to someone else, but without information linking the transaction to anyone.  This is similar to the level of information released by stock exchanges, where the time and size of individual trades, the "tape", is made public, but without telling who the parties were.
+
+公众能看到有人正在向另一个人转账某个金额，但看不到把这笔交易关联到具体身份的信息。这与证券交易所公布的信息层级相似：单笔交易的时间和规模（即「行情带」）是公开的，但交易双方是谁并不公开。
 
 <Sidenote kind="why">
 证券交易所的 "tape" 这个类比定得很准：成交时间和规模全公开，对手方不公开。这正是比特币能提供的隐私上限——不是隐身，是<strong>去身份化的完全透明</strong>。
@@ -629,6 +648,8 @@ $$
 </Sidenote>
 
 > Given our assumption that p > q, the probability drops exponentially as the number of blocks the attacker has to catch up with increases.  With the odds against him, if he doesn't make a lucky lunge forward early on, his chances become vanishingly small as he falls further behind.
+
+在我们假设 p > q 的前提下，攻击者需要追赶的区块数每增加一个，成功概率就指数下降。他一开始就落后，如果不能靠早期的一次幸运冲刺追上，机会会随着落后加深而趋于消失。
 
 ### 第三步：收款方不知道攻击者已经挖了多少
 
@@ -789,6 +810,8 @@ q=0.45   z=340
 
 > We have proposed a system for electronic transactions without relying on trust.  We started with the usual framework of coins made from digital signatures, which provides strong control of ownership, but is incomplete without a way to prevent double-spending.  To solve this, we proposed a peer-to-peer network using proof-of-work to record a public history of transactions that quickly becomes computationally impractical for an attacker to change if honest nodes control a majority of CPU power.
 
+我们提出了一套不依赖信任的电子交易系统。
+
 <Sidenote kind="caution">
 <em>computationally impractical</em>——计算上不可行，不是"不可能"。白皮书从未声称信息论意义上的安全。历史是可以被改的，只是代价随深度指数上升。
 </Sidenote>
@@ -802,6 +825,8 @@ q=0.45   z=340
 "无结构的简单性"是中本聪对自己设计的评价，我认为这是他最自豪的一句。节点不需要身份，因为消息不需要路由到特定地点——这个性质让网络可以任意进出而无需注册、无需成员管理。
 
 > Nodes can leave and rejoin the network at will, accepting the proof-of-work chain as proof of what happened while they were gone.  They vote with their CPU power, expressing their acceptance of valid blocks by working on extending them and rejecting invalid blocks by refusing to work on them.  Any needed rules and incentives can be enforced with this consensus mechanism.
+
+节点可以随意离开和重新加入网络，回来时只要接受工作量证明链作为它离开期间发生了什么的证明即可。
 
 <Sidenote kind="term">
 <em>consensus mechanism</em> 这个今天满天飞的词，在整篇白皮书里<strong>只出现这一次</strong>，就在最后一句。
@@ -879,3 +904,31 @@ q=0.45   z=340
 <Check q="'比特币白皮书发明了区块链'这句话错在哪？">
 两处。一，`blockchain` 这个词（连分写形式）在九页原文里一次都没出现。二，链式哈希时间戳是 Haber 和 Stornetta 1991 年的工作，白皮书第 3 节明确引用了 [2]–[5]。中本聪的贡献是把时间戳链、工作量证明、点对点广播和经济激励**组装**成一个能在开放网络里自洽运行的系统。
 </Check>
+
+## 拿它去用
+
+<Apply task="有人跟你说「比特币是匿名的」。用论文第 10 节的原文判断这句话对不对。">
+不对，论文自己说的是**假名**不是匿名。
+
+第 10 节的原话是公众能看到「someone is sending an amount to someone else」——交易全部公开，只是公钥不直接绑定身份。中本聪明确提示了两处泄露：多输入交易会暴露这些输入同属一人（这就是后来地址聚类分析的基础），以及公钥重用会把一个人的交易串起来。
+
+所以正确表述是「假名 + 公开账本」，而这个组合在实践中比匿名更弱——链上数据永久留存，一次身份关联就能回溯全部历史。论文对此是诚实的，通俗报道不是。
+</Apply>
+
+<Apply task="第 11 节算出攻击者追赶概率随区块数指数下降。一个交易所说「我们等 6 个确认，所以绝对安全」。这句话的问题在哪？" kind="定量边界">
+问题在「绝对」，以及它省掉了论文那个计算的前提。
+
+第 11 节的推导明确假设 `p > q`——诚实节点算力占多数。6 个确认给出的是**在这个假设成立时**攻击成功概率已经很小（论文给了 `q=0.1` 和 `q=0.3` 两组表格）。它不是一个与算力分布无关的安全常数。
+
+如果攻击者掌握接近或超过半数算力，指数下降的结论整个失效——这就是 51% 攻击，不是漏洞而是模型前提被违反。所以准确说法是「在算力分布健康的前提下，6 个确认把重组风险降到可接受」，而这两个限定词都不能省。
+</Apply>
+
+<Apply task="论文第 7 节讲用 Merkle 树剪枝，第 8 节讲简化支付验证（SPV）。手机钱包不存全链却能验证收款——它相信了什么？" kind="追踪信任假设">
+它相信了**最长链的区块头序列是诚实的**。
+
+SPV 客户端只下载区块头（每个约 80 字节），加上一条 Merkle 分支来证明「我这笔交易在这个区块里」。它没有验证那个区块里其他交易的有效性，也没有验证发送方是否真有那笔钱。
+
+中本聪在第 8 节明确写了这个弱点，并给了缓解方向：从网络节点接受警报。所以 SPV 的安全性不是密码学保证的，是**经济假设**保证的——依赖多数算力诚实。全节点验证的是规则，SPV 信任的是多数。
+
+这个区分决定了实际选择：小额支付用 SPV 合理，大额结算应当自己跑全节点。
+</Apply>

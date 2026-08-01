@@ -1551,6 +1551,63 @@ ul.plain li {
 .check-a > :first-child { margin-top: 0; }
 .check-a > :last-child { margin-bottom: 0; }
 
+/* Transfer task. Same shape as .check so the reading rhythm is unbroken, but
+   the accent marks it as a different act: recall vs. use. */
+.apply {
+  margin: 1.75rem 0;
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg-sunk);
+}
+
+.apply > summary {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.apply > summary::-webkit-details-marker { display: none; }
+
+.apply > summary::after {
+  content: '▸';
+  margin-left: auto;
+  color: var(--fg-faint);
+  font-size: 0.7rem;
+}
+
+.apply[open] > summary::after { content: '▾'; }
+
+.apply-tag {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.apply-q {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.apply-a {
+  padding: 0 1rem 0.9rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--fg-dim);
+  border-top: 1px dashed var(--rule);
+  padding-top: 0.8rem;
+}
+
+.apply-a > :first-child { margin-top: 0; }
+.apply-a > :last-child { margin-bottom: 0; }
+
 /* ---------- reading list ---------- */
 
 .reading { margin-top: 3rem; }

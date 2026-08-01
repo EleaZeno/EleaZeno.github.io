@@ -1,0 +1,17 @@
+---
+interface Props {
+  /** The transfer task. Must be a situation the text did not walk through. */
+  task: string;
+  /** Optional short label for the kind of transfer. */
+  kind?: string;
+}
+const { task, kind = '迁移' } = Astro.props as Props;
+---
+
+<details class="apply">
+  <summary>
+    <span class="apply-tag">{kind}</span>
+    <span class="apply-q">{task}</span>
+  </summary>
+  <div class="apply-a"><slot /></div>
+</details>

@@ -71,6 +71,7 @@ reading:
 import Sidenote from '../../components/Sidenote.astro';
 import Check from '../../components/Check.astro';
 import Prereq from '../../components/Prereq.astro';
+import Apply from '../../components/Apply.astro';
 
 <Prereq of={["prime", "polynomial-time", "deterministic-algorithm", "modular-arithmetic"]} />
 
@@ -222,6 +223,8 @@ Input: integer n > 1.
 
 > Theorem 4.1. The algorithm above returns PRIME if and only if n is prime.
 
+定理 4.1：上面的算法返回 PRIME，当且仅当 n 是素数。
+
 <Sidenote kind="term">
 o_r(n) 叫 n 模 r 的**乘法阶**：使 n^k ≡ 1 (mod r) 成立的最小正整数 k。第 2 步要找的 r 就是让这个阶大于 (log n)² 的最小值。φ(r) 是欧拉函数，即 1 到 r 中与 r 互素的个数。
 </Sidenote>
@@ -279,3 +282,21 @@ n=8191  → r=179, 第 5 步循环 a=1..173
 <Check q="AKS 证明了素数判定属于 P，为什么密码库仍然用 Miller-Rabin？">
 因为"确定性"在工程上不值那个价钱。Miller-Rabin 的错误概率可以压到 2^(-128) 以下，远低于内存位翻转或硬件故障的概率；而 AKS 慢几个数量级。论文本身也从未主张实用——它回答的是"可不可能"，不是"该不该用"。
 </Check>
+
+## 拿它去用
+
+<Apply task="你在写代码，需要判断一个 2048 位的数是不是素数。你会用 AKS 吗？说出理由，并指出「多项式时间」在这个决定里起了什么作用。">
+不会用。这是理解这篇论文最重要的一个判断。
+
+AKS 的贡献是**理论的**：它第一次证明素性判定属于 P。但它的指数很高（原版约 `Õ(log^10.5 n)`，改进后约 `Õ(log^6 n)`），常数也大。实践中一律用 Miller-Rabin 这类概率算法——它是随机化的、有极小的错判概率，但快几个数量级。
+
+「多项式时间」在这里的作用是**划定复杂度类的边界**，不是给出可用的程序。把这两件事混为一谈，是读复杂度论文最常见的错误。RSA 密钥生成用的是 Miller-Rabin，不是 AKS，而这不构成对 AKS 的批评。
+</Apply>
+
+<Apply task="论文的支点是恒等式 (x−a)^n ≡ x^n − a  (mod n) 当且仅当 n 是素数。有人说「那直接验证这个恒等式就行了，为什么还需要后面那么多步？」" kind="识别隐藏代价">
+因为直接验证要展开 `n+1` 个系数，而 `n` 是输入的**数值**，不是输入的**长度**。位数是 `log n`，所以 `n+1` 个系数是指数级的工作量。
+
+论文后面所有的复杂度都花在同一件事上：把这个指数级的检验压成多项式级。做法是在模一个精心选出的 `x^r − 1` 之下比较，把系数个数从 `n+1` 降到 `r`，再证明存在足够小的 `r`（`r = O(log^5 n)`）使这个较弱的检验仍然充分。
+
+这个「代价在哪」的分辨力，比记住恒等式本身更有用——它是读任何复杂度论文的通用动作。
+</Apply>

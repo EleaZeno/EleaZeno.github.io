@@ -43,7 +43,9 @@
   --bg-raise: #151920;
   --fg: #e8e8e3;
   --fg-dim: #9aa3b0;
-  --fg-faint: #656e7c;
+  /* WCAG AA (4.5:1) against --bg-sunk, the worst case: tag pills sit on it.
+     Was #656e7c = 3.61:1 on sunk, which failed for 10-12px metadata text. */
+  --fg-faint: #7a8391;
   --rule: #1e232b;
   --rule-strong: #2c333d;
 
@@ -67,7 +69,8 @@
     --bg-raise: #ffffff;
     --fg: #14171c;
     --fg-dim: #545c68;
-    --fg-faint: #838b97;
+    /* WCAG AA (4.5:1) against --bg-sunk. Was #838b97 = 3.06:1 on sunk. */
+    --fg-faint: #696f7a;
     --rule: #e2e2db;
     --rule-strong: #c8c8bf;
 
