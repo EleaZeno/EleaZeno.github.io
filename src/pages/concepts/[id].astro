@@ -88,7 +88,7 @@ const jsonLd = {
                 <a href={m.kind === 'classic' ? url('classics/' + m.id) : postUrl(m.id)}>
                   {m.title}
                 </a>
-                {m.kind === 'classic' && <span class="badge-classic">经典拆解</span>}
+                {m.kind === 'classic' && <span class="badge-classic">经典</span>}
                 <span class="muted mono"> {formatDate(m.date)}</span>
               </li>
             ))}

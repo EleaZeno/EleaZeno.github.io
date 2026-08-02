@@ -50,7 +50,7 @@ const allYears = [
   <div class="page page-wide">
     <p class="kicker">归档</p>
     <h1 class="page-title">
-      共 {posts.length} 篇文章{classics.length > 0 && <> · {classics.length} 篇文献拆解</>}{
+      共 {posts.length} 篇文章{classics.length > 0 && <> · {classics.length} 篇一手文献</>}{
         dreams.length > 0 && <> · {dreams.length} 篇夜间笔记</>
       }
     </h1>
@@ -61,7 +61,7 @@ const allYears = [
           <div class="feed">
             {(byYear.get(year) ?? []).map((post) => <Entry post={post} as="h3" />)}
           </div>
-          <ClassicList items={classicsByYear.get(year) ?? []} heading="本年的一手文献拆解" />
+          <ClassicList items={classicsByYear.get(year) ?? []} heading="本年的一手文献" />
           {(dreamsByYear.get(year) ?? []).length > 0 && (
             <section class="classic-aside">
               <p class="kicker">本年的夜间笔记</p>

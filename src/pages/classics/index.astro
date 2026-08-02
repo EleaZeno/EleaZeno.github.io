@@ -25,7 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
   section="classics"
 >
   <header class="page">
-    <p class="kicker">经典拆解</p>
+    <p class="kicker">经典</p>
     <h1>经典</h1>
     <p class="standfirst">
       我们挑改变过一个领域的原始文献，逐节拆开重讲。不是摘要，也不是普通译文：
@@ -37,7 +37,7 @@ const FIELD_LABELS: Record<string, string> = {
 
   {
     entries.length === 0 ? (
-      <p class="empty">还没有拆解。</p>
+      <p class="empty">还没有文献。</p>
     ) : (
       <ul class="classic-list">
         {entries.map((e) => (

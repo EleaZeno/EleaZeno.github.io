@@ -31,7 +31,7 @@ export async function GET(context: APIContext) {
       description: entry.data.description,
       pubDate: entry.data.pubDate,
       link: url(`classics/${entry.id}/`),
-      categories: ['经典拆解', entry.data.field],
+      categories: ['经典', entry.data.field],
     })),
     // Nightly notes carry a summary rather than a description, and they are
     // explicitly unverified — the category says so, so a subscriber can tell

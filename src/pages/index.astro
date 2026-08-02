@@ -22,7 +22,7 @@ const classics = await getClassics();
     <h1>{SITE.description}</h1>
     <div class="stat-row">
       <span><b>{posts.length}</b> 篇文章</span>
-      {classics.length > 0 && <span><b>{classics.length}</b> 篇文献拆解</span>}
+      {classics.length > 0 && <span><b>{classics.length}</b> 篇一手文献</span>}
       <span><b>{dreams.length}</b> 则夜间笔记</span>
       {posts[0] && <span>最近更新 <b>{formatDate(posts[0].data.pubDate)}</b></span>}
     </div>
@@ -54,7 +54,7 @@ const classics = await getClassics();
   {
     classics.length > 0 && (
       <section class="home-classics">
-        <p class="kicker">一手文献拆解</p>
+        <p class="kicker">一手文献</p>
         <p class="muted deck">
           读原始论文，不读转述。每篇标注一手来源与校验和，逐节对照原文。
         </p>
@@ -67,7 +67,7 @@ const classics = await getClassics();
             </li>
           ))}
         </ul>
-        <p class="more-link"><a href={url('classics')}>看全部拆解 →</a></p>
+        <p class="more-link"><a href={url('classics')}>看全部 →</a></p>
       </section>
     )
   }
