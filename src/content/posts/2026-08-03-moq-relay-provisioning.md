@@ -143,7 +143,7 @@ moq-sub --name my-namespace \
 
 ## 边界
 
-**这是 beta，API 会变**。 Cloudflare 自己在文里写了「API will change as we develop it」并让读者盯开发者文档看破坏性变更。现在写的集成代码有返工成本。
+**这是 beta，API 会变**。 Cloudflare 自己在文里写了`API will change as we develop it`并让读者盯开发者文档看破坏性变更。现在写的集成代码有返工成本。
 
 **Internet-Draft 不是 RFC**。 MoQ Transport 本身还在 draft 阶段（Cloudflare 支持的是 draft-14 和 draft-16 两个版本，说明版本在快速推进），那份开通草案的 API 模型还会随工作组的进展变化。押注在草案上的人需要接受这一点。
 
