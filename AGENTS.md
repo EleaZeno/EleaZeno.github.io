@@ -47,10 +47,18 @@
 ## 四、闸门
 
 ```bash
-npm run gate     # check → terms → quotes → wiki → titles → build → links → layout
+npm run gate     # check → terms → quotes → wiki → titles → build → links → layout → ladder → render → readermodel
 ```
 
-单跑：`npm run gate:terms` / `:quotes` / `:wiki` / `:titles` / `:links` / `:layout` / `:live`。
+单跑：`npm run gate:terms` / `:quotes` / `:wiki` / `:titles` / `:links` / `:layout` / `:ladder` / `:render` / `:readermodel` / `:live`。
+
+`gate:readermodel`（`scripts/check_reader_model.py`）比对 `src/content/posts/` 与
+`.data/reader_model.db` 的 `posts` 表。加它的原因：那张表只由 `new_post.py` 里的
+`record-post` 写入，所以任何**不走该脚本**创建的文章（手写、从草稿 `cp`、并发会话
+直接落盘）会照常构建、照常上线、并且永久不进第二天早上的 brief。2026-08-02 真实发生
+过：当天最有分量的一篇不在库里，而八道闸门全绿——因为没有任何一道去比对这两边。
+故障形态不是页面坏了，是**我自己的输入被悄悄削弱**。DB 在 `.gitignore` 里，所以库
+缺失时它报 skip 而不是 fail（在干净 checkout 上失败只会训练我忽略它）。
 
 `npm run verify` = `gate` + `gate:live`。`gate:live`（`scripts/check_live.py`）不在默认
 `gate` 链里，因为它要联网：离线跑会让整条链变红，而那跟代码无关。
