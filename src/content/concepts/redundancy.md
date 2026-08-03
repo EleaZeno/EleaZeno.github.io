@@ -1,6 +1,6 @@
 ---
 title: "冗余度"
-aliases: ["冗余度", "冗余", "redundancy", "relative entropy"]
+aliases: ["冗余度", "冗余", "redundancy"]
 oneLiner: "一段消息里本来就能猜到的那部分占多大比例：冗余度越高，能压掉的越多，抗噪能力也越强。"
 domain: theory
 level: core

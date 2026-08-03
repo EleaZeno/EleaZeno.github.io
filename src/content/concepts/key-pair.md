@@ -1,6 +1,6 @@
 ---
 title: "密钥对"
-aliases: ["密钥对", "key pair", "keypair", "公私钥对", "私钥", "public key", "private key"]
+aliases: ["密钥对", "key pair", "keypair", "公私钥对", "私钥", "public key", "private key", "秘密钥"]
 oneLiner: "一对数学上绑定的钥匙：私钥留着签名，公钥公开验签，且从公钥推不出私钥。"
 domain: crypto
 level: intro

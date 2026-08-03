@@ -1,6 +1,6 @@
 ---
 title: "哈希函数"
-aliases: ["哈希", "hash", "散列", "哈希函数", "SHA-256", "摘要", "hash function", "digest"]
+aliases: ["哈希", "hash", "散列", "哈希函数", "SHA-256", "消息摘要", "hash function", "digest"]
 oneLiner: "把任意长的数据压成一段固定长度的指纹：同样的输入必得同样的指纹，改一个字指纹就全变。"
 domain: crypto
 level: intro

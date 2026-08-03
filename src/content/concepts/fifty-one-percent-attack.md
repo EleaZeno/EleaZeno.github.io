@@ -1,6 +1,6 @@
 ---
 title: "51% 攻击"
-aliases: ["51% 攻击", "51%攻击", "51% attack", "majority attack", "多数算力攻击", "51"]
+aliases: ["51% 攻击", "51%攻击", "51% attack", "majority attack", "多数算力攻击"]
 oneLiner: "攻击者算力超过全网一半后，可以重写最近的历史。"
 domain: crypto
 level: core

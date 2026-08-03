@@ -133,6 +133,33 @@ def main():
         if hits:
             todo[p]=dict(sorted(hits.items(), key=lambda kv:-kv[1]))
 
+    # Alias hygiene. The autolinker (src/lib/rehype-wikilink.mjs) resolves a
+    # matched string by longest-first alternation and nothing else, so when two
+    # concepts claim the same alias the winner is whatever order loadTerms()
+    # happens to return -- decided silently, with no warning. Two real mis-links
+    # came from this class in two days: "change" pointed at 找零 inside an
+    # English quotation, and "51" (an alias of 51% 攻击) fired on a bare 字数.
+    # Nothing else in the chain can catch it: every other gate reads source
+    # text, and the source text is innocent -- the defect is in the alias table.
+    ambiguous = {}
+    for i, d in ids.items():
+        for a in d.get('aliases_inline', []):
+            if not a:
+                continue
+            ambiguous.setdefault(a, []).append(i)
+    for a, owners in sorted(ambiguous.items()):
+        if len(owners) > 1:
+            prob.setdefault('alias_claimed_twice', []).append(
+                '%r claimed by %s; the autolinker picks one arbitrarily'
+                % (a, ' and '.join(sorted(owners))))
+    for i, d in ids.items():
+        for a in d.get('aliases_inline', []):
+            # A pure-digit alias matches any occurrence of those digits --
+            # a percentage, a count, a year. Never what the author meant.
+            if a and re.fullmatch(r'[0-9]+', a):
+                prob.setdefault('alias_bare_number', []).append(
+                    '%s: alias %r matches any digits in prose' % (i, a))
+
     out={'concepts':len(ids),'posts':len(posts),'problems':prob,
          'uncovered_terms':todo}
     json.dump(out,sys.stdout,ensure_ascii=False,indent=2)
