@@ -7,7 +7,15 @@
  */
 import { loadTerms } from './concept-terms.mjs';
 
-const SKIP = new Set(['a', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'script', 'style']);
+/**
+ * `blockquote` is skipped because quoted primary text is evidence, not our
+ * prose: an alias table built for our glossary must not silently reinterpret
+ * someone else's words. Satoshi's "the block cannot be changed" was linked to
+ * /concepts/change-output (Bitcoin 找零) on that rule alone.
+ */
+const SKIP = new Set([
+  'a', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'script', 'style', 'blockquote',
+]);
 
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

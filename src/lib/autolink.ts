@@ -23,7 +23,10 @@ export interface Term {
   hint: string;
 }
 
-const SKIP_TAGS = new Set(['a', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'script', 'style']);
+/** Keep in sync with SKIP in rehype-wikilink.mjs (see the note there on `blockquote`). */
+const SKIP_TAGS = new Set([
+  'a', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'script', 'style', 'blockquote',
+]);
 
 /** CJK has no word boundaries, so \\b is useless for Chinese terms. */
 function isCjk(s: string): boolean {
