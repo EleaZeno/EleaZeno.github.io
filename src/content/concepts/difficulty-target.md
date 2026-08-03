@@ -1,6 +1,6 @@
 ---
 title: "难度与目标值"
-aliases: ["难度", "目标值", "难度目标", "difficulty", "target", "nBits", "difficulty target"]
+aliases: ["挖矿难度", "目标值", "难度目标", "difficulty target", "nBits", "mining difficulty"]
 oneLiner: "一个门槛数字：区块头哈希必须比它小才过关，越低越难"
 domain: crypto
 level: core
