@@ -141,11 +141,23 @@ def main():
     # English quotation, and "51" (an alias of 51% 攻击) fired on a bare 字数.
     # Nothing else in the chain can catch it: every other gate reads source
     # text, and the source text is innocent -- the defect is in the alias table.
+    # The pool the autolinker actually builds is [title, *aliases] (see
+    # concept-terms.mjs loadTerms). Comparing aliases only against aliases
+    # therefore misses the whole title-vs-alias half of the same defect: an
+    # alias that duplicates ANOTHER concept's title collides just as hard, and
+    # 18 of 70 concepts do not list their own title among their aliases, so the
+    # collision is invisible unless titles go into the same bucket. Verified by
+    # injection: giving agent.md the alias 纠删码 (erasure-coding's title)
+    # mis-linked 4 pages to /concepts/agent while every gate stayed green.
+    # Which one wins depends on readdirSync order, so the same table can be
+    # harmless today and wrong after an unrelated file is added.
     ambiguous = {}
     for i, d in ids.items():
-        for a in d.get('aliases_inline', []):
-            if not a:
-                continue
+        surfaces = list(d.get('aliases_inline', []))
+        t = d.get('title', '').strip().strip('"')
+        if t:
+            surfaces.append(t)
+        for a in set(s for s in surfaces if s):
             ambiguous.setdefault(a, []).append(i)
     for a, owners in sorted(ambiguous.items()):
         if len(owners) > 1:

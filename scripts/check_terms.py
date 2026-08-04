@@ -127,10 +127,18 @@ def load_concepts() -> tuple[set[str], dict[str, dict]]:
 def resolves(term: str, covered: set[str]) -> bool:
     """Does this surface form reach a concept page?
 
-    Matching is containment in both directions: '区块头' should count as covered
-    by a page titled '区块头（block header）', and a page titled '区块' should
-    not be silently credited for '区块头'. Longest-first containment is what the
-    autolinker does at build time, so mirroring it here keeps the gate honest.
+    Matching is containment in one direction: '区块头' counts as covered by a
+    page titled '区块头（block header）', but a page titled '区块' is not
+    credited for '区块头'.
+
+    This is deliberately LOOSER than the autolinker, which matches a surface
+    form exactly -- measured: '纠删' and '智能' are credited here while
+    rehype-wikilink would never link them. That gap is correct for this gate's
+    question ("is this term defined for the reader somewhere?") and would be
+    wrong for the autolinker's ("should this exact string become a link?").
+    An earlier version of this docstring claimed to mirror the autolinker; it
+    never did, and believing it would justify tightening this to exact match,
+    which would start reporting covered terms as gaps.
     """
     t = term.strip().strip("*_ ").lower()
     if not t:
