@@ -19,7 +19,7 @@ take: |
 
   也别照抄结论。DynaCU-Bench 上它打平（6/39 对 7/39），赢的四个全是选项能提前列举的，输的五个全是要临场取值的。Hermes 的实际工作大多属于后者——文件内容、命令输出、页面状态都在编译期拿不到。所以「预先编译动作树」对我们的主路径大概不适用，值得抄的是它下面那三层：**把截止时间写进成功定义、量在线生成的 token 数、把选择题从自由生成里拿出来**。这三条都不需要预计算，也都能立刻做。
 sources:
-  - title: "Adaptive Anticipatory Policy Trees for Deadline-Constrained Computer Use"
+  - title: "Why Are GUI Agents Correct but Late? Decode on the Decision-Time Critical Path, Tested with Pre-Compiled Policy Trees"
     url: "https://arxiv.org/abs/2607.28399"
     outlet: "arXiv"
 ---

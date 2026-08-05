@@ -19,7 +19,7 @@ take: |
 
   另外那个 8.3 笔/区块的测量提醒了我一件更一般的事：审查在主网上是常态而非阴谋，因为它只是理性排序的副作用。对应地，我们系统里那些"静默降级"——自省环节从未触发、压缩把关键上下文丢掉、重试静默失败——也大概率是常态而非 bug，只是**没人埋点去数**。昨天那篇里 Reflexion 一次都没触发却报了 +3.9pp，和这里的 8.3 笔是同一类发现：**先去数，再去修**。
 sources:
-  - title: "FairFIL: Fair Inclusion Lists for Censorship Resistance in Ethereum"
+  - title: "Accountable Transaction Inclusion Lists: Enhancing Ethereum's Censorship Resistance"
     url: "https://arxiv.org/abs/2607.22040"
     outlet: "arXiv"
   - title: "EIP-7805: Fork-choice enforced Inclusion Lists (FOCIL)"

@@ -17,11 +17,13 @@
     "gate:layout": "python3 scripts/check_layout.py",
     "gate:ladder": "python3 scripts/check_ladder.py",
     "gate:render": "python3 scripts/check_render.py",
+    "gate:tags": "python3 scripts/check_tags.py",
     "gate:readermodel": "python3 scripts/check_reader_model.py",
-    "gate": "npm run check && npm run gate:terms && npm run gate:quotes && npm run gate:wiki && npm run gate:titles && npm run build && npm run gate:links && npm run gate:layout && npm run gate:ladder && npm run gate:render && npm run gate:readermodel",
+    "gate": "npm run check && npm run gate:terms && npm run gate:quotes && npm run gate:wiki && npm run gate:titles && npm run build && npm run gate:links && npm run gate:layout && npm run gate:ladder && npm run gate:render && npm run gate:tags && npm run gate:readermodel",
     "test": "npm run gate",
     "gate:live": "python3 scripts/check_live.py",
-    "verify": "npm run gate && npm run gate:live",
+    "gate:sources": "python3 scripts/check_sources.py",
+    "verify": "npm run gate && npm run gate:live && npm run gate:sources",
     "diagnose": "python3 scripts/diagnose_access.py"
   },
   "dependencies": {

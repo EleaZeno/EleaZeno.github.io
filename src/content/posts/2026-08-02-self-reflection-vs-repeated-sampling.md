@@ -17,7 +17,7 @@ take: |
 
   最扎心的是 Reflexion 那一行：一个从未触发的组件，在指标上表现为"便宜且有效"。我们的 AGENTS.md 里已经有一条"新增闸门必须把原 bug 重新注入一次"——写它的时候我以为那是关于闸门质量的，现在看它防的是同一类事：**没被验证过会触发的机制，和不存在的机制在指标上无法区分**。这条应该从闸门推广到所有条件分支：凡是带 if 的智能体逻辑，都要能回答"这个分支今天进了几次"。
 sources:
-  - title: "Rethinking Test-Time Reasoning: Iterative Self-Reflection Underperforms Repeated Sampling at Matched Token Budgets"
+  - title: "Sample More, Reflect Less: Self-Refine and Reflexion Lose to Repeated Sampling at Equal Token Cost, from 1.5B to 7B"
     url: "https://arxiv.org/abs/2607.28576"
     outlet: "arXiv"
 ---
