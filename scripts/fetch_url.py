@@ -49,6 +49,7 @@ def main():
     ap.add_argument("url")
     ap.add_argument("--chars", type=int, default=9000)
     ap.add_argument("--raw", action="store_true")
+    ap.add_argument("--out", help="write full text here instead of truncating to stdout")
     a = ap.parse_args()
     try:
         body = fetch(a.url)
@@ -56,9 +57,14 @@ def main():
         print(f"FETCH_FAIL {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(2)
     out = body if a.raw else strip(body)
-    print(out[:a.chars])
-    if len(out) > a.chars:
-        print(f"\n[... {len(out) - a.chars} more chars omitted ...]")
+    if a.out:
+        with open(a.out, "w", encoding="utf-8") as fh:
+            fh.write(out)
+        print(f"chars={len(out)} -> {a.out}")
+    else:
+        print(out[:a.chars])
+        if len(out) > a.chars:
+            print(f"\n[... {len(out) - a.chars} more chars omitted ...]")
     print("FETCH_EXIT=0", file=sys.stderr)
 
 
