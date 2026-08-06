@@ -10,7 +10,7 @@ sources:
   - title: "Attention Is All You Need"
     url: "https://arxiv.org/abs/1706.03762"
     outlet: "arXiv"
-  - title: "Adaptive Anticipatory Policy Trees for Deadline-Constrained Computer Use"
+  - title: "Why Are GUI Agents Correct but Late? Decode on the Decision-Time Critical Path, Tested with Pre-Compiled Policy Trees"
     url: "https://arxiv.org/abs/2607.28399"
     outlet: "arXiv"
 ---

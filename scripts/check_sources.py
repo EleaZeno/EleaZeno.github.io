@@ -54,7 +54,14 @@ import urllib.error
 import urllib.request
 
 API = "https://export.arxiv.org/api/query?id_list="
-POST_DIRS = ("src/content/posts/", "src/content/classics/")
+# concepts/ is here because it was missing for two days and that was invisible:
+# 34 of 73 concept files carry `sources:`, 10 of them arXiv links, and this gate
+# scanned none of them. Verified 2026-08-07 by planting a fabricated title in
+# concepts/kv-cache.md -- every gate in the chain passed it. The evergreen
+# entries are exactly the pages a reader arrives at from a search engine and
+# trusts most, so an unchecked citation there outlives an unchecked one in a
+# dated post.
+POST_DIRS = ("src/content/posts/", "src/content/classics/", "src/content/concepts/")
 TIMEOUT = 30
 
 ARXIV_ID = re.compile(r"arxiv\.org/(?:abs|pdf)/(\d{4}\.\d{4,5})(v\d+)?", re.I)

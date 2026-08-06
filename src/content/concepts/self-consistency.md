@@ -10,7 +10,7 @@ sources:
   - title: "Self-Consistency Improves Chain of Thought Reasoning in Language Models"
     url: "https://arxiv.org/abs/2203.11171"
     outlet: "arXiv"
-  - title: "Do Small Language Models Benefit from Structured Reasoning Scaffolds? A Compute-Matched Evaluation"
+  - title: "Sample More, Reflect Less: Self-Refine and Reflexion Lose to Repeated Sampling at Equal Token Cost, from 1.5B to 7B"
     url: "https://arxiv.org/abs/2607.28576"
     outlet: "arXiv"
 ---
